@@ -1,0 +1,25 @@
+#    addServer ( long configurationId, string name, string defaultInterfaceAddress, string fullHostName, string profile, string properties )
+#    profiles: ADONIS_250, ADONIS_500, ADONIS_750, ADONIS_800, ADONIS_1000, ADONIS_1200, ADONIS_1750, ADONIS_1900, ADONIS_1950,
+#              ADONIS_XMB2, ADONIS_XMB3, DNS_DHCP_SERVER_20, DNS_DHCP_SERVER_45, DNS_DHCP_SERVER_60, DNS_DHCP_SERVER_100,
+#              DNS_DHCP_SERVER_100_D, AFILIAS_DNS_SERVER, OTHER_DNS_SERVER, PROTEUS_DDW, WINDOWS_SERVER
+
+function Add-BlueCatServer {
+    [cmdletbinding()]
+    param(
+        [Parameter()]
+        [Alias('Connection','Session')]
+        [BlueCat] $BlueCatSession = $Script:BlueCatSession,
+
+        [ValidateScript({
+            $_ -in @('ADONIS_250', 'ADONIS_500', 'ADONIS_750', 'ADONIS_800', 'ADONIS_1000', 'ADONIS_1200', 'ADONIS_1750', 'ADONIS_1900',
+                'ADONIS_1950', 'ADONIS_XMB2', 'ADONIS_XMB3', 'DNS_DHCP_SERVER_20', 'DNS_DHCP_SERVER_45', 'DNS_DHCP_SERVER_60', 'DNS_DHCP_SERVER_100',
+                'DNS_DHCP_SERVER_100_D', 'AFILIAS_DNS_SERVER', 'OTHER_DNS_SERVER', 'PROTEUS_DDW', 'WINDOWS_SERVER')
+        })] [string] $Profile = 'OTHER_DNS_SERVER'
+    )
+
+    begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
+
+    process {
+        $null
+    }
+} # Placeholder Add-BlueCatServer
