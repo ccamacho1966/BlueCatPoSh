@@ -1,33 +1,29 @@
 ﻿function Get-BlueCatEntityById {
     [cmdletbinding()]
     param(
-        [Parameter()]
-        [Alias('Connection','Session')]
-        [BlueCat] $BlueCatSession = $Script:BlueCatSession,
-
         [parameter(Mandatory)]
         [Alias('EntityID')]
-        [int] $ID
+        [int] $ID,
+
+        [Parameter()]
+        [Alias('Connection','Session')]
+        [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
 
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
+        Write-Verbose "Get-BlueCatEntityById: ID='$($ID)'"
+
         $Query = "getEntityById?id=$($ID)"
         $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
-        if ($result.id -eq 0) {
+
+        if (-not $result.id) {
             Write-Verbose "Get-BlueCatEntityById: ID #$($ID) not found: $($result)"
             throw "Entity Id $($ID) not found: $($result)"
         }
+        Write-Verbose "Get-BlueCatEntityByID: Selected $($result.type) #$($result.id) as $($result.name)"
 
-        $objConfig = $objView = $null
-        if ($result.type -ne 'Configuration') {
-            $objConfig = Trace-BlueCatConfigFor -ID $ID -Connection $BlueCatSession
-            if (($result.type -ne 'View') -and ($result.type -notmatch '^IP4[BNA].*')) {
-                $objView = Trace-BlueCatViewFor -ID $ID -Connection $BlueCatSession
-            }
-        }
-
-        $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession -Configuration $objConfig -View $objView
+        $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
     }
 }
