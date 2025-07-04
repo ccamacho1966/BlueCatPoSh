@@ -1,21 +1,38 @@
 function Convert-FQDNtoDeployZone {
-    [cmdletbinding()]
+    [cmdletbinding(DefaultParameterSetName='byID')]
     param(
-        [Parameter()]
-        [Alias('Connection','Session')]
-        [BlueCat] $BlueCatSession = $Script:defaultBlueCat,
-
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [string] $FQDN,
 
-        [parameter(DontShow)]
-        [switch] $Quiet
+        [Parameter(ParameterSetName='byObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PsCustomObject] $View,
+
+        [Parameter(ParameterSetName='byID')]
+        [Alias('ID')]
+        [int] $ViewID,
+
+        [Parameter(DontShow)]
+        [switch] $Quiet,
+
+        [Parameter()]
+        [Alias('Connection','Session')]
+        [BlueCat] $BlueCatSession = $Script:defaultBlueCat
     )
 
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
 
     process {
-        $BlueCatSession | Confirm-Settings -Config -View
+        if ($View.id) {
+            # View object passed to function, select the ID
+            $ViewID = $View.id
+        }
+
+        if (-not $ViewID) {
+            # If no View ID has been set by this point, try to use the default
+            $BlueCatSession | Confirm-Settings -View
+            $ViewID = $BlueCatSession.idView
+        }
 
         $zPath = $FQDN.TrimEnd('\.').Split('\.')
         [array]::Reverse($zPath)
@@ -23,7 +40,10 @@ function Convert-FQDNtoDeployZone {
         $zDig = $true
         $result = $null
         $notZone = $null
-        $zId = $BlueCatSession.idView
+
+        # Set the starting point for the zone/FQDN search to the View
+        $zId = $ViewID
+
         foreach ($bit in $zPath) {
             if ($zDig) {
                 # save the result in case this is the last bit of the zone path
@@ -69,12 +89,15 @@ function Convert-FQDNtoDeployZone {
             } # zone not deployable
         }
 
+        # Retrieve the view object
+        $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+
         $ZIobj = New-Object -TypeName psobject
-        $ZIobj | Add-Member -MemberType NoteProperty -Name name      -Value $FQDN.TrimEnd('\.')
-        $ZIobj | Add-Member -MemberType NoteProperty -Name type      -Value ZoneInfo
+        $ZIobj | Add-Member -MemberType NoteProperty -Name name      -Value ($FQDN.TrimEnd('\.'))
+        $ZIobj | Add-Member -MemberType NoteProperty -Name type      -Value 'ZoneInfo'
         $ZIobj | Add-Member -MemberType NoteProperty -Name zone      -Value $zObj
-        $ZIobj | Add-Member -MemberType NoteProperty -Name config    -Value $($BlueCatSession | Get-BlueCatConfig)
-        $ZIobj | Add-Member -MemberType NoteProperty -Name view      -Value $($BlueCatSession | Get-BlueCatView)
+        $ZIobj | Add-Member -MemberType NoteProperty -Name config    -Value $View.config
+        $ZIobj | Add-Member -MemberType NoteProperty -Name view      -Value $View
         $ZIobj | Add-Member -MemberType NoteProperty -Name shortName -Value $notZone
 
         $ZIobj
