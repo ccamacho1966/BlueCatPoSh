@@ -2,12 +2,14 @@ function Resolve-BlueCatFQDN {
     [cmdletbinding(DefaultParameterSetName='ViewID')]
     param(
         [parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string] $FQDN,
 
         [Parameter(ParameterSetName='ViewID')]
         [int]$ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [PSCustomObject] $View,
 
         [Parameter()]
@@ -31,21 +33,21 @@ function Resolve-BlueCatFQDN {
             $ViewID = $View.ID
         }
 
-        if ($ViewID) {
-            # A view ID has been passed in as an integer or via an object
-            $zId = $ViewID
-        } else {
+        if (-not $ViewID) {
             # No view ID has been passed in so attempt to use the default view
             $BlueCatSession | Confirm-Settings -View
-            $zId = $BlueCatSession.idView
+            $ViewID = $BlueCatSession.idView
         }
 
         if (-not $View) {
-            $View = Get-BlueCatView -ID $zId -BlueCatSession $BlueCatSession
+            $View = Get-BlueCatView -ID $ViewID -BlueCatSession $BlueCatSession
         }
 
+        # Set the starting point for the zone/FQDN search to the View
+        $zId = $ViewID
+
         $FQDN = $FQDN.TrimEnd('\.')
-        Write-Verbose "BlueCat: Resolve-FQDN: Searching database for '$($FQDN)'"
+        Write-Verbose "Resolve-BlueCatFQDN: Searching database for '$($FQDN)'"
 
         $zPath = $FQDN.Split('\.')
         [array]::Reverse($zPath)
@@ -99,7 +101,7 @@ function Resolve-BlueCatFQDN {
             } # zone not deployable
         }
 
-        $FQDNobj = New-Object -TypeName psobject
+        $FQDNobj = New-Object -TypeName PSCustomObject
         $FQDNobj | Add-Member -MemberType NoteProperty -Name name      -Value $FQDN
         $FQDNobj | Add-Member -MemberType NoteProperty -Name type      -Value FQDN
         $FQDNobj | Add-Member -MemberType NoteProperty -Name shortName -Value $notZone
@@ -107,17 +109,17 @@ function Resolve-BlueCatFQDN {
         $hObj = $null
         if ($zObj) {
             if (!$Quiet) {
-                Write-Verbose "BlueCat: Resolve-FQDN: Selected Zone #$($zObj.id) as '$($zObj.name)'"
+                Write-Verbose "Resolve-BlueCatFQDN: Selected Zone #$($zObj.id) as '$($zObj.name)'"
             }
             $Query = "getEntityByName?parentId=$($zObj.id)&type=HostRecord&name=$($FQDNobj.shortName)"
             $result = Invoke-BlueCatApi -Connection $BlueCatSession -Method Get -Request $Query
             if ($result.id) {
                 $hObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
                 if (!$Quiet) {
-                    Write-Verbose "BlueCat: Resolve-FQDN: Selected Host #$($hObj.id) as '$($hObj.name)'"
+                    Write-Verbose "Resolve-BlueCatFQDN: Selected Host #$($hObj.id) as '$($hObj.name)'"
                 }
             } elseif (!$Quiet) {
-                Write-Verbose "BlueCat: Resolve-FQDN: No host record found in internal zone"
+                Write-Verbose "Resolve-BlueCatFQDN: No host record found in internal zone"
             }
         }
 
@@ -127,7 +129,7 @@ function Resolve-BlueCatFQDN {
         try {
             $xhObj = Get-BlueCatExternalHost -BlueCatSession $BlueCatSession -Name $FQDNobj.name 4>$null
             if (!$Quiet) {
-                Write-Verbose "BlueCat: Resolve-FQDN: Selected External Host #$($xhObj.id) as '$($xhObj.name)'"
+                Write-Verbose "Resolve-BlueCatFQDN: Selected External Host #$($xhObj.id) as '$($xhObj.name)'"
             }
         } catch {
             $xhObj = $null
@@ -135,7 +137,7 @@ function Resolve-BlueCatFQDN {
 
         if ($hObj -and $xhObj) {
             if (!$Quiet) {
-                Write-Warning "BlueCat: Resolve-FQDN: Found internal and external host records for '$($FQDNobj.name)'"
+                Write-Warning "Resolve-BlueCatFQDN: Found internal and external host records for '$($FQDNobj.name)'"
             }
         }
 
@@ -146,12 +148,12 @@ function Resolve-BlueCatFQDN {
 
         if ($result.id) {
             $AliasObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-            Write-Verbose "BlueCat: Resolve-FQDN: Selected Alias #$($AliasObj.id) as '$($AliasObj.name)' (points to $($AliasObj.property.linkedRecordName))"
+            Write-Verbose "Resolve-BlueCatFQDN: Selected Alias #$($AliasObj.id) as '$($AliasObj.name)' (points to $($AliasObj.property.linkedRecordName))"
             $FQDNobj | Add-Member -MemberType NoteProperty -Name alias -Value $AliasObj
         }
 
-        $FQDNobj | Add-Member -MemberType NoteProperty -Name config -Value $(Get-BlueCatConfig -BlueCatSession $BlueCatSession)
-        $FQDNobj | Add-Member -MemberType NoteProperty -Name view   -Value $(Get-BlueCatView   -BlueCatSession $BlueCatSession)
+        $FQDNobj | Add-Member -MemberType NoteProperty -Name config -Value $View.config
+        $FQDNobj | Add-Member -MemberType NoteProperty -Name view   -Value $View
 
         $FQDNobj
     }

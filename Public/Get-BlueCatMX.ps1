@@ -15,7 +15,7 @@ Function Get-BlueCatMX {
     process {
         $BlueCatSession | Confirm-Settings -Config -View
 
-        $ZIobj = Convert-FQDNtoDeployZone -BlueCatSession $BlueCatSession -FQDN $Name
+        $ZIobj = Resolve-BlueCatFQDN -FQDN $Name -BlueCatSession $BlueCatSession
 
         if (!$ZIobj.zone) { throw "No deployable zone found for $($Name.TrimEnd('\.'))!" }
 
@@ -35,8 +35,8 @@ Function Get-BlueCatMX {
             $MXobj | Add-Member -MemberType NoteProperty -Name type      -Value MXList
             $MXobj | Add-Member -MemberType NoteProperty -Name MXList    -Value $MXarray
             $MXobj | Add-Member -MemberType NoteProperty -Name zone      -Value $ZIobj.zone
-            $MXobj | Add-Member -MemberType NoteProperty -Name config    -Value $($BlueCatSession | Get-BlueCatConfig)
-            $MXobj | Add-Member -MemberType NoteProperty -Name view      -Value $($BlueCatSession | Get-BlueCatView)
+            $MXobj | Add-Member -MemberType NoteProperty -Name config    -Value $ZIobj.config
+            $MXobj | Add-Member -MemberType NoteProperty -Name view      -Value $ZIobj.view
             $MXobj | Add-Member -MemberType NoteProperty -Name shortName -Value $ZIobj.shortName
             $MXobj | Add-Member -MemberType NoteProperty -Name Count     -Value $result.Count
             $MXobj | Add-Member -MemberType NoteProperty -Name Length    -Value $result.Length

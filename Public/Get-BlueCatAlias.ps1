@@ -15,7 +15,7 @@
     process {
         $BlueCatSession | Confirm-Settings -Config -View
 
-        $ZIobj = Convert-FQDNtoDeployZone -BlueCatSession $BlueCatSession -FQDN $Name
+        $ZIobj = Resolve-BlueCatFQDN -FQDN $Name -BlueCatSession $BlueCatSession
         if (!$ZIobj.zone) { throw "No deployable zone found for $($Name.TrimEnd('\.'))!" }
 
         $Query = "getEntityByName?parentId=$($ZIobj.zone.id)&type=AliasRecord&name=$($ZIobj.shortName)"
