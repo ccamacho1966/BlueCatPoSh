@@ -17,8 +17,8 @@
 
         if ($BlueCatSession.idView) { $BlueCatSession | Clear-BlueCatView }
 
-        $BlueCatSession.idView = 0
-        $BlueCatSession.View = $null
-        Write-Verbose "Clear-BlueCatView: View cleared from $($BlueCatSession.Username)@$($BlueCatSession.Server)"
+        $BlueCatSession.idConfig = 0
+        $BlueCatSession.Config = $null
+        Write-Verbose "Clear-BlueCatConfig: Config cleared from $($BlueCatSession.Username)@$($BlueCatSession.Server)"
     }
 }
