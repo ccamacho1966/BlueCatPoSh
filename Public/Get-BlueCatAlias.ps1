@@ -1,32 +1,65 @@
 ﻿function Get-BlueCatAlias { # also known as CNAME
-    [cmdletbinding()]
-    param(
-        [Parameter()]
-        [Alias('Connection','Session')]
-        [BlueCat] $BlueCatSession = $Script:BlueCatSession,
+    [cmdletbinding(DefaultParameterSetName='ViewID')]
 
+    param(
         [parameter(Mandatory)]
         [Alias('CNAME','Alias')]
-        [string] $Name
+        [string] $Name,
+
+        [Parameter(ParameterSetName='ViewID')]
+        [int]$ViewID,
+
+        [Parameter(ParameterSetName='ViewObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject] $View,
+
+        [Parameter()]
+        [Alias('Connection','Session')]
+        [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
 
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        $BlueCatSession | Confirm-Settings -Config -View
+        $thisFN = (Get-PSCallStack)[0].Command
 
-        $ZIobj = Resolve-BlueCatFQDN -FQDN $Name -BlueCatSession $BlueCatSession
-        if (!$ZIobj.zone) { throw "No deployable zone found for $($Name.TrimEnd('\.'))!" }
+        if ($View) {
+            # A view object has been passed in so test its validity
+            if (-not $View.ID) {
+                # This is not a valid view object!
+                throw "Invalid View object passed to function!"
+            }
+            # Use the view ID from the View object
+            $ViewID = $View.ID
+        }
 
-        $Query = "getEntityByName?parentId=$($ZIobj.zone.id)&type=AliasRecord&name=$($ZIobj.shortName)"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
+        if (-not $ViewID) {
+            # No view ID has been passed in so attempt to use the default view
+            $BlueCatSession | Confirm-Settings -View
+            Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View)' (ID:$($BlueCatSession.idView))"
+            $ViewID = $BlueCatSession.idView
+        }
 
-        if (!$result.id) { throw "No Alias/CName record found for $($Name.TrimEnd('\.'))" }
+        # Trim any trailing dots from the name for consistency/display purposes
+        $FQDN = $Name.TrimEnd('\.')
 
-        $AliasObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-        $AliasObj | Add-Member -MemberType NoteProperty -Name zone -Value $ZIobj.zone
+        # Standardize lookups and retrieved information
+        $Resolved = Resolve-BlueCatFQDN -FQDN $FQDN -ViewID $ViewID -BlueCatSession $BlueCatSession
 
-        Write-Verbose "Get-BlueCatAlias: Selected #$($AliasObj.id) as '$($AliasObj.name)' (points to '$($AliasObj.property.linkedRecordName)')"
+        # Warn that a possibly conflicting external host record was also found
+        if ($Resolved.external) {
+            Write-Warning "$($thisFN): Found External Host '$($Resolved.name)' (ID:$($Resolved.external.id))"
+        }
+
+        # Validate that an alias object was returned
+        $AliasObj = $Resolved.alias
+        if (!$AliasObj.id) { throw "No Alias/CName record found for $($FQDN)" }
+
+        # Reduce redundant API calls by using zone information returned by Resolve-BlueCatFQDN
+        $AliasObj | Add-Member -MemberType NoteProperty -Name zone -Value $Resolved.zone
+        Write-Verbose "$($thisFN): Selected #$($AliasObj.id) as '$($AliasObj.name)' (points to '$($AliasObj.property.linkedRecordName)')"
+
+        # Return the alias object to caller
         $AliasObj
     }
 }
