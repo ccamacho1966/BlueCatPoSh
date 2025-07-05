@@ -1,13 +1,13 @@
 ﻿function Set-BlueCatView {
     [cmdletbinding()]
     param(
-        [Parameter(Mandatory,ParameterSetName='ByName')]
+        [Parameter(Mandatory,Position=0,ParameterSetName='ByName')]
         [string] $Name,
 
-        [Parameter(Mandatory,ParameterSetName='ByID')]
+        [Parameter(Mandatory,Position=0,ParameterSetName='ByID')]
         [int] $ID,
 
-        [Parameter(ValueFromPipeline)]
+        [Parameter(ValueFromPipeline,Position=1)]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession,
 
