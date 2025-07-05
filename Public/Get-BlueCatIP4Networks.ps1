@@ -1,49 +1,52 @@
 ﻿function Get-BlueCatIP4Networks {
     [cmdletbinding()]
-    param(
-        [Parameter()]
-        [Alias('Connection','Session')]
-        [BlueCat] $BlueCatSession = $Script:BlueCatSession,
 
+    param(
         [Parameter(Mandatory,ParameterSetName='byBlock')]
-        [psobject] $Block,
+        [PSCustomObject] $Block,
 
         [Parameter(Mandatory,ParameterSetName='byID')]
         [int] $Parent,
-
-        [switch] $IpAddresses,
 
         [int] $Start = 0,
 
         [int] $Count = 10,
 
-        [string] $Options
+        [switch] $IpAddresses,
+
+        [string] $Options,
+
+        [Parameter()]
+        [Alias('Connection','Session')]
+        [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
 
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        if ($PSCmdlet.ParameterSetName -eq 'byID') {
-            $containerId=$Parent
-        } else {
-            $containerId=$Block.id
+        $thisFN = (Get-PSCallStack)[0].Command
+
+        # Select the entity ID for the parent IP4 block
+        if ($Block) { $Parent = $Block.id }
+
+        # Retrieve the parent IP4 block and confirm it is the correct entity type
+        $parentInfo = Get-BlueCatEntityById -ID $Parent -BlueCatSession $BlueCatSession
+        if ($parentInfo.type -ne 'IP4Block') {
+            throw "ID:$($Parent) is not an IP4Block entity!"
         }
 
-        $parentInfo = [PSCustomObject]@{
-            id   = $containerId
-            type = 'IP4Block'
-        }
-
-        $Uri = "getEntities?parentId=$($containerId)&type=IP4Network&start=$($Start)&count=$($Count)"
+        # Retrieve the requested number of IP4 network records
+        $Uri = "getEntities?parentId=$($Parent)&type=IP4Network&start=$($Start)&count=$($Count)"
         if ($Options) { $Uri += "&options=$($Options)" }
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Uri
+        $result = Invoke-BlueCatApi -Method Get -Request $Uri -BlueCatSession $BlueCatSession
 
         if ($result.Count) {
-            Write-Verbose "Get-BlueCatIP4Networks: Found $($result.Count) networks under IP4Block #$($containerId)"
+            Write-Verbose "$($thisFN): Found $($result.Count) networks under IP4Block #$($Parent)"
             foreach ($bit in $result) {
                 $ip4net = $bit | Convert-BlueCatReply -BlueCatSession $BlueCatSession
                 $ip4net | Add-Member -MemberType NoteProperty -Name 'parent' -Value $parentInfo
                 if ($IpAddresses) {
+                    # Retrieve all IP addresses in this network and attach to the IP4 network object
                     [PSCustomObject[]]$addressList = @()
                     $i = 0
                     $perLoop = 10
@@ -58,7 +61,9 @@
                         $ip4net | Add-Member -MemberType NoteProperty -Name 'addresses' -Value $addressList
                     }
                 }
-                Write-Verbose "Get-BlueCatIP4Networks: ID #$($ip4net.id) is '$($ip4net.name)' CIDR: $($ip4net.property.CIDR)"
+                Write-Verbose "$($thisFN): ID #$($ip4net.id) is '$($ip4net.name)' CIDR: $($ip4net.property.CIDR)"
+
+                # Add each IP4 Network object to the stack to return to the caller
                 $ip4net
             }
         }
