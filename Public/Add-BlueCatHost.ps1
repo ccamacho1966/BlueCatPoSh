@@ -1,5 +1,6 @@
 ﻿function Add-BlueCatHost {
-    [cmdletbinding()]
+    [cmdletbinding(DefaultParameterSetName='ViewID')]
+
     param(
         [parameter(Mandatory)]
         [Alias('HostName')]
@@ -8,7 +9,14 @@
         [parameter(Mandatory)]
         [string[]] $Addresses, # accept one or more strings
 
-        [int] $TTL = -1,
+        [int] $TTL, # Used to default to -1
+
+        [Parameter(ParameterSetName='ViewID')]
+        [int]$ViewID,
+
+        [Parameter(ParameterSetName='ViewObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject] $View,
 
         [Parameter()]
         [Alias('Connection','Session')]
@@ -20,21 +28,35 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        $HostInfo = Resolve-BlueCatFQDN -Connection $BlueCatSession -FQDN $Name
+        $thisFN = (Get-PSCallStack)[0].Command
+
+        $NewHost = $Name.TrimEnd('\.')
+        $LookupParms = @{
+            Name           = $NewHost
+            BlueCatSession = $BlueCatSession
+        }
+        if ($ViewID) {
+            $LookupParms.ViewID = $ViewID
+        } elseif ($View)   {
+            $LookupParms.View   = $View
+            $ViewID             = $View.ID
+        }
+
+        $HostInfo = Resolve-BlueCatFQDN @LookupParms
         if ($HostInfo.host) {
             # There is already a host entry!!
-            Throw 'Host record already exists'
+            throw 'Host record already exists'
         }
 
         if (-not $HostInfo.zone) {
             # No deployable zone was found for Alias/CName
-            throw "No deployable zone for $($Name)"
+            throw "No deployable zone for $($NewHost)"
         }
 
-        Write-Verbose "Add-BlueCatHost: Selected Zone #$($HostInfo.zone.id) as '$($HostInfo.zone.name)'"
+        Write-Verbose "$($thisFN): Selected Zone #$($HostInfo.zone.id) as '$($HostInfo.zone.name)'"
 
         if ($HostInfo.external) {
-            Write-Warning "Add-BlueCatHost: An external host entry exists for '$($HostInfo.external.name)'"
+            Write-Warning "$($thisFN): An external host entry exists for '$($HostInfo.external.name)'"
         }
 
         $ipList = $null
@@ -46,12 +68,17 @@
             }
         }
 
-        $Query = "addHostRecord?viewId=$($HostInfo.view.id)&absoluteName=$($HostInfo.name)&addresses=$($ipList)&ttl=$($TTL)"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Query
-        if (-not $result.id) { throw "Host creation failed for $($Name) - $($result)" }
+        $Query = "addHostRecord?viewId=$($HostInfo.view.id)&absoluteName=$($HostInfo.name)&addresses=$($ipList)"
+        if ($TTL) { $Query += "&ttl=$($TTL)" }
+        $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Query -BlueCatSession $BlueCatSession
+        if (-not $BlueCatReply.id) {
+            throw "Host creation failed for $($NewHost) - $($BlueCatReply)"
+        }
 
-        Write-Verbose "Add-BlueCatHost: Created #$($result.id) as '$($HostInfo.name)' (IP(s): $($ipList))"
+        Write-Verbose "$($thisFN): Created #$($BlueCatReply.id) as '$($HostInfo.name)' (IP(s): $($ipList))"
 
-        if ($PassThru) { Get-BlueCatHost -BlueCatSession $BlueCatSession -Name $HostInfo.name }
+        if ($PassThru) {
+            Get-BlueCatHost @LookupParms
+        }
     }
 }

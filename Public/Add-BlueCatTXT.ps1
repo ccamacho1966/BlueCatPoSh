@@ -1,18 +1,27 @@
 ﻿function Add-BlueCatTXT {
-    [cmdletbinding()]
-    param(
-        [Parameter()]
-        [Alias('Connection','Session')]
-        [BlueCat] $BlueCatSession = $Script:BlueCatSession,
+    [cmdletbinding(DefaultParameterSetName='ViewID')]
 
+    param(
         [parameter(Mandatory)]
-        [string] $FQDN,
+        [Alias('HostName','FQDN')]
+        [string] $Name,
 
         [parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string] $Text,
 
-        [int]$TTL = -1,
+        [int] $TTL, # Used to default to -1
+
+        [Parameter(ParameterSetName='ViewID')]
+        [int]$ViewID,
+
+        [Parameter(ParameterSetName='ViewObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject] $View,
+
+        [Parameter()]
+        [Alias('Connection','Session')]
+        [BlueCat] $BlueCatSession = $Script:BlueCatSession,
 
         [switch]$PassThru
     )
@@ -20,21 +29,35 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        $TextInfo = Resolve-BlueCatFQDN -BlueCatSession $BlueCatSession -FQDN $FQDN
+        $thisFN = (Get-PSCallStack)[0].Command
 
-        if ($TextInfo.zone) {
-            Write-Verbose "Add-BlueCatTXT: Selected Zone #$($TextInfo.zone.id) as '$($TextInfo.zone.name)'"
-        } else {
+        $FQDN = $Name.TrimEnd('\.')
+        $LookupParms = @{
+            Name           = $FQDN
+            BlueCatSession = $BlueCatSession
+        }
+        if ($ViewID) {
+            $LookupParms.ViewID = $ViewID
+        } elseif ($View)   {
+            $LookupParms.View   = $View
+            $ViewID             = $View.ID
+        }
+
+        $TextInfo = Resolve-BlueCatFQDN @LookupParms
+
+        if ($TextInfo.alias) {
+            throw "Aborting TXT record creation: Alias/CName record for $($FQDN) found!"
+        }
+
+        if (-not $TextInfo.zone) {
             # No deployable zone was found for TXT record
             throw "No deployable zone was found for $($FQDN)"
         }
 
+        Write-Verbose "$($thisFN): Selected Zone #$($TextInfo.zone.id) as '$($TextInfo.zone.name)'"
+
         if ($TextInfo.external) {
             Write-Warning "Add-BlueCatTXT: An external host entry exists for '$($TextInfo.external.name)'"
-        }
-
-        if ($TextInfo.alias) {
-            throw "Aborting TXT record creation: Alias/CName record for $($FQDN) found!"
         }
 
         if ($TextInfo.shortName) {
@@ -44,14 +67,19 @@
         }
 
         $TextString = [uri]::EscapeDataString($Text.Trim('"'))
-        $Uri = "addTXTRecord?viewId=$($TextInfo.view.id)&absoluteName=$($TextName)&txt=$($TextString)&ttl=$($TTL)"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Uri
-        if (-not $result) {
-            throw "TXT creation failed for $($Host) - $($result)"
+        $Uri = "addTXTRecord?viewId=$($TextInfo.view.id)&absoluteName=$($TextName)&txt=$($TextString)"
+        if ($TTL) {
+            $Uri += "&ttl=$($TTL)"
+        }
+        $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Uri -BlueCatSession $BlueCatSession
+        if (-not $BlueCatReply) {
+            throw "TXT creation failed for $($FQDN) - $($BlueCatReply)"
         }
 
-        Write-Verbose "Add-BlueCatTXT: Created #$($result) for '$($TextInfo.name)'"
+        Write-Verbose "Add-BlueCatTXT: Created #$($BlueCatReply) for '$($TextInfo.name)'"
 
-        if ($PassThru) { Get-BlueCatTXT -BlueCatSession $BlueCatSession -HostName $TextInfo.name }
+        if ($PassThru) {
+            Get-BlueCatTXT @LookupParms
+        }
     }
 }

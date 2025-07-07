@@ -1,34 +1,27 @@
 ﻿function Add-BlueCatIP4Block {
     [cmdletbinding()]
+
     param(
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string] $Name,
 
-        [parameter(Mandatory,ParameterSetName='CIDRObj')]
-        [parameter(Mandatory,ParameterSetName='CIDRStr')]
+        [Parameter(Mandatory,ParameterSetName='CIDR')]
         [ValidateNotNullOrEmpty()]
         [string] $CIDR,
 
-        [parameter(Mandatory,ParameterSetName='RangeObj')]
-        [parameter(Mandatory,ParameterSetName='RangeStr')]
+        [Parameter(Mandatory,ParameterSetName='Range')]
         [ValidateNotNullOrEmpty()]
         [string] $Start,
 
-        [parameter(Mandatory,ParameterSetName='RangeObj')]
-        [parameter(Mandatory,ParameterSetName='RangeStr')]
+        [Parameter(Mandatory,ParameterSetName='Range')]
         [ValidateNotNullOrEmpty()]
         [string] $End,
 
         [int] $Parent,
 
-        [parameter(ParameterSetName='CIDRStr')]
-        [parameter(ParameterSetName='RangeStr')]
-        [string] $PropertyString,
-
-        [parameter(Mandatory,ParameterSetName='CIDRObj')]
-        [parameter(Mandatory,ParameterSetName='RangeObj')]
-        [PSCustomObject] $PropertyObject,
+        [Alias('PropertyObject')]
+        [PSCustomObject] $Property,
 
         [Parameter()]
         [Alias('Connection','Session')]
@@ -40,9 +33,18 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
 
     process {
-        $BlueCatSession | Confirm-Settings -Config
+        $thisFN = (Get-PSCallStack)[0].Command
 
-        if (-not $Parent) { $Parent = $BlueCatSession.idConfig }
+        if (-not $Parent) {
+            $BlueCatSession | Confirm-Settings -Config
+            $Parent = $BlueCatSession.idConfig
+        }
+
+        # Confirm that the provided parent ID is for an IP4 block or Configuration
+        $BlockCheck = Get-BlueCatEntityById -ID $Parent -BlueCatSession $BlueCatSession
+        if ($BlockCheck.type -notin ('IP4Block','Configuration')) {
+            throw "ID:$($Parent) type is not IP4Block or Configuration (Type: $($BlockCheck.type))"
+        }
 
         if ($CIDR) {
             $Query = "addIP4BlockByCIDR?parentId=$($Parent)&CIDR=$($CIDR)"
@@ -52,22 +54,27 @@
             Write-Verbose "Attempting to add range: $($Start)-$($End) to entity #$($Parent)"
         }
 
-        if ($PropertyObject) {
-            $PropertyString = $PropertyObject | Convert-BlueCatPropertyObject
+        if ($Property.Name -and $Name) {
+            Write-Warning "$($thisFN): Overwriting Property.Name ($($Property.Name)) with specified name ($($Name))"
+            $Property.Name = [uri]::EscapeDataString($Name)
         }
 
-        if ($PropertyString -or $Name) {
-            $Query += "&properties="
-            if ($PropertyString) { $Query += $PropertyString }
-            if ($Name)           { $Query += "name=$([uri]::EscapeDataString($Name))|" }
+        if ($Property) {
+            $PropertyString = $Property | Convert-BlueCatPropertyObject
+        }
+
+        if ($PropertyString) {
+            $Query += "&properties=$($PropertyString)"
         }
 
         Write-Verbose "$Query"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Query
-        if (-not $result) {
-            throw "Add-BlueCatIP4Block: Failed to create new IP4 block"
+        $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Query
+        if (-not $BlueCatReply) {
+            throw "$($thisFN): Failed to create new IP4 block"
         }
 
-        if ($PassThru) { Get-BlueCatEntityById -BlueCatSession $BlueCatSession -ID $result }
+        if ($PassThru) {
+            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+        }
     }
 }

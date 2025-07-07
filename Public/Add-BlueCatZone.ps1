@@ -1,16 +1,25 @@
 ﻿function Add-BlueCatZone {
-    [cmdletbinding()]
+    [cmdletbinding(DefaultParameterSetName='ViewID')]
+
     param(
+        [parameter(Mandatory)]
+        [Alias('Zone')]
+        [string] $Name,
+
+        [switch] $NotDeployable,
+
+        [PSCustomObject] $Properties,
+
+        [Parameter(ParameterSetName='ViewID')]
+        [int]$ViewID,
+
+        [Parameter(ParameterSetName='ViewObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject] $View,
+
         [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession,
-
-        [parameter(Mandatory)]
-        [string] $Zone,
-
-        [bool] $Deployable = $true,
-
-        [psobject] $Properties,
 
         [switch] $PassThru
     )
@@ -18,19 +27,50 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        Confirm-Settings -BlueCatSession $BlueCatSession -Config -View
+        $thisFN = (Get-PSCallStack)[0].Command
 
-        if ($Deployable) {
-            $propString='deployable=true|'
+        $NewZone = $Name.TrimEnd('\.')
+        $LookupParms = @{
+            Name           = $NewZone
+            BlueCatSession = $BlueCatSession
+        }
+        if ($ViewID) {
+            $LookupParms.ViewID = $ViewID
+        } elseif ($View)   {
+            $LookupParms.View   = $View
+            $ViewID             = $View.ID
         } else {
-            $propString='deployable=false|'
+            $BlueCatSession | Confirm-Settings -View
+            $ViewID             = $BlueCatSession.idView
+            $LookupParms.ViewID = $ViewID
         }
 
-        $Uri = "addZone?parentId=$($BlueCatSession.idView)&absoluteName=$($Zone)&properties=$($propString)"
-        $zId = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Uri
+        try {
+            $ZoneCheck = Get-BlueCatZone @LookupParms
+        } catch {
+            # This is what we want - Zone not found
+        }
+        if ($ZoneCheck) {
+            throw "Zone $($ZoneCheck.name) already exists"
+        }
 
-        Write-Verbose "Add-BlueCatZone: Created #$($zId) as '$($Zone)'"
+        if ($NotDeployable) {
+            $propString='deployable=false|'
+        } else {
+            $propString='deployable=true|'
+        }
 
-        if ($PassThru) { Get-BlueCatZone -BlueCatSession $BlueCatSession -Zone $Zone }
+        $Uri = "addZone?parentId=$($ViewID)&absoluteName=$($NewZone)&properties=$($propString)"
+        $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Uri -BlueCatSession $BlueCatSession
+
+        if (-not $BlueCatReply) {
+            throw "Host creation failed for $($NewHost) - $($BlueCatReply)"
+        }
+
+        Write-Verbose "$($thisFN): Created #$($BlueCatReply) as '$($NewZone)'"
+
+        if ($PassThru) {
+            Get-BlueCatZone @LookupParms
+        }
     }
 }

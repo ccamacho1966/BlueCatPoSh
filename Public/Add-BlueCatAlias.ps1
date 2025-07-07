@@ -1,5 +1,6 @@
 ﻿function Add-BlueCatAlias {
-    [cmdletbinding()]
+    [cmdletbinding(DefaultParameterSetName='ViewID')]
+
     param(
         [Parameter(Mandatory)]
         [Alias('Alias')]
@@ -11,6 +12,13 @@
 
         [int] $TTL, # used to default to -1
 
+        [Parameter(ParameterSetName='ViewID')]
+        [int]$ViewID,
+
+        [Parameter(ParameterSetName='ViewObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject] $View,
+
         [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession,
@@ -21,12 +29,31 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        $AliasInfo = Resolve-BlueCatFQDN -BlueCatSession $BlueCatSession -FQDN $Name
+        $thisFN = (Get-PSCallStack)[0].Command
+
+        $Name = $Name.TrimEnd('\.')
+        $LookupParms = @{
+            FQDN           = $Name
+            BlueCatSession = $BlueCatSession
+        }
+        if ($ViewID) {
+            $LookupParms.ViewID = $ViewID
+        } elseif ($View)   {
+            $LookupParms.View   = $View
+            $ViewID             = $View.ID
+        }
+
+        $AliasInfo = Resolve-BlueCatFQDN @LookupParms
         if (-not $AliasInfo.zone) {
             # No deployable zone was found for Alias/CName
             throw "No deployable zone was found for $($Name)"
         }
-        Write-Verbose "Add-BlueCatAlias: Selected Zone #$($AliasInfo.zone.id) as '$($AliasInfo.zone.name)'"
+        Write-Verbose "$($thisFN): Selected Zone #$($AliasInfo.zone.id) as '$($AliasInfo.zone.name)'"
+
+        if ($AliasInfo.alias) {
+            # There is already an existing alias
+            throw "Existing alias record found - aborting Alias creation!"
+        }
 
         if ($AliasInfo.host) {
             # There is already a host entry for this Alias/CName!!
@@ -34,10 +61,11 @@
         }
 
         if ($AliasInfo.external) {
-            Write-Warning "Add-BlueCatAlias: An external host entry exists for '$($AliasInfo.external.name)'"
+            Write-Warning "$($thisFN): An external host entry exists for '$($AliasInfo.external.name)'"
         }
 
-        $LinkedInfo = Resolve-BlueCatFQDN -Connection $BlueCatSession -FQDN $LinkedHost
+        $LookupParms.FQDN = $LinkedHost
+        $LinkedInfo = Resolve-BlueCatFQDN @LookupParms
         $propString = "absoluteName=$($AliasInfo.name)|linkedRecordName=$($LinkedInfo.name)|"
         if ($TTL) {
             $propString += "ttl=$($TTL)|"
@@ -56,11 +84,14 @@
 
         $Body = $aliasObj | ConvertTo-Json
         $Query = "addEntity?parentId=$($AliasInfo.zone.id)"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Query -Body $Body
+        $result = Invoke-BlueCatApi -Method Post -Request $Query -Body $Body -BlueCatSession $BlueCatSession
         if (-not $result.id) { throw "Alias creation failed for $($Name) - $($result)" }
 
-        Write-Verbose "Add-BlueCatAlias: Created #$($result) as '$($AliasInfo.name)' (points to '$($LinkedInfo.name)')"
+        Write-Verbose "$($thisFN): Created #$($result) as '$($AliasInfo.name)' (points to '$($LinkedInfo.name)')"
 
-        if ($PassThru) { Get-BlueCatAlias -BlueCatSession $BlueCatSession -Name $Name }
+        if ($PassThru) {
+            $LookupParms.FQDN = $Name
+            Get-BlueCatAlias @LookupParms
+        }
     }
 }

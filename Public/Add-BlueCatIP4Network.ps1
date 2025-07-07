@@ -1,25 +1,22 @@
 ﻿function Add-BlueCatIP4Network {
-    [cmdletbinding(DefaultParameterSetName='CIDRstr')]
-    param(
+    [cmdletbinding()]
+
+    Param(
         [Parameter(Mandatory)]
-        [int] $BlockID,
+        [Alias('BlockID')]
+        [int] $Parent,
 
         [Parameter(Mandatory)]
+        [Alias('Network')]
         [string] $CIDR,
 
-        [Parameter(Mandatory,ParameterSetName='CIDRobj')]
-        [psobject] $PropertyObject,
-
-        [ValidateNotNullOrEmpty()]
-        [Parameter(ParameterSetName='CIDRstr')]
-        [string] $PropertyString,
+        [Parameter()]
+        [Alias('PropertyObject')]
+        [PSCustomObject] $Property,
 
         [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession,
-
-        [Parameter(DontShow)]
-        [switch] $Quiet,
 
         [switch] $PassThru
     )
@@ -27,22 +24,32 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
 
     process {
-        if ($PropertyObject) {
-            $PropertyString = $PropertyObject | Convert-BlueCatPropertyObject
+        $thisFN = (Get-PSCallStack)[0].Command
+
+        # Confirm that the provided parent ID is for an IP4 block
+        $BlockCheck = Get-BlueCatEntityById -ID $Parent -BlueCatSession $BlueCatSession
+        if ($BlockCheck.type -ne 'IP4Block') {
+            throw "ID:$($Parent) type is not IP4Block (Type: $($BlockCheck.type))"
         }
 
-        Write-Verbose "Add-BlueCatIP4Network: Create network [$($CIDR)] under block ID #$($BlockID)"
-        $Uri = "addIP4Network?blockId=$($BlockID)&CIDR=$($CIDR)"
+        if ($Property) {
+            $PropertyString = $Property | Convert-BlueCatPropertyObject
+        }
+
+        Write-Verbose "$($thisFN): Create network [$($CIDR)] under block ID #$($Parent)"
+        $Uri = "addIP4Network?blockId=$($Parent)&CIDR=$($CIDR)"
         if ($PropertyString) {
-            Write-Verbose "Add-BluecatIP4Network: New property string [$($PropertyString)]"
+            Write-Verbose "$($thisFN): New property string [$($PropertyString)]"
             $Uri += "&properties=$($PropertyString)"
         }
 
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Uri
-        if (-not $result) {
-            throw "Add-BlueCatIP4Network: Failed to create new IP4 network $($CIDR) in block #$($BlockID)"
+        $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Uri -BlueCatSession $BlueCatSession
+        if (-not $BlueCatReply) {
+            throw "Failed to create new IP4 network $($CIDR) in block #$($Parent)"
         }
 
-        if ($PassThru) { Get-BlueCatEntityById -BlueCatSession $BlueCatSession -ID $result }
+        if ($PassThru) {
+            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+        }
     }
 }
