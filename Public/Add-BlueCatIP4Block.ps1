@@ -56,7 +56,15 @@
 
         if ($Property.Name -and $Name) {
             Write-Warning "$($thisFN): Overwriting Property.Name ($($Property.Name)) with specified name ($($Name))"
-            $Property.Name = [uri]::EscapeDataString($Name)
+            $Property.Name = $Name
+        } elseif ($Property -and $Name) {
+            $Property | Add-Member -MemberType NoteProperty -Name 'name' -Value $Name
+        } elseif ($Name) {
+            $Property = [PSCustomObject] @{ name = $Name }
+        }
+
+        if ($Property.Name) {
+            $Property.Name = [uri]::EscapeDataString($Property.Name)
         }
 
         if ($Property) {
