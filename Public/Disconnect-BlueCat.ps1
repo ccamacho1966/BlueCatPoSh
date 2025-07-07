@@ -1,5 +1,6 @@
 function Disconnect-BlueCat {
     [cmdletbinding()]
+
     param(
         [parameter(ValueFromPipeline)]
         [Alias('Connection','Session')]
@@ -9,6 +10,8 @@ function Disconnect-BlueCat {
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
 
     process {
+        $thisFN = (Get-PSCallStack)[0].Command
+
         if (-not $BlueCatSession) {
             # If we're using the default then erase the default
             $BlueCatSession = $Script:BlueCatSession
@@ -17,9 +20,9 @@ function Disconnect-BlueCat {
 
         if ($BlueCatSession) {
             $Result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request 'logout'
-            Write-Verbose $Result
+            Write-Verbose "$($thisFN): $($Result)"
         } else {
-            Write-Verbose 'No active BlueCat session to disconnect'
+            Write-Verbose "$($thisFN): No active BlueCat session to disconnect"
         }
     }
 }

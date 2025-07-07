@@ -13,17 +13,19 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        Write-Verbose "Get-BlueCatEntityById: ID='$($ID)'"
+        $thisFN = (Get-PSCallStack)[0].Command
+
+        Write-Verbose "$($thisFN): ID='$($ID)'"
 
         $Query = "getEntityById?id=$($ID)"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
+        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
-        if (-not $result.id) {
-            Write-Verbose "Get-BlueCatEntityById: ID #$($ID) not found: $($result)"
-            throw "Entity Id $($ID) not found: $($result)"
+        if (-not $BlueCatReply.id) {
+            Write-Verbose "$($thisFN): ID #$($ID) not found: $($BlueCatReply)"
+            throw "Entity Id $($ID) not found: $($BlueCatReply)"
         }
-        Write-Verbose "Get-BlueCatEntityByID: Selected $($result.type) #$($result.id) as $($result.name)"
+        Write-Verbose "$($thisFN): Selected $($BlueCatReply.type) #$($BlueCatReply.id) as $($BlueCatReply.name)"
 
-        $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+        $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
     }
 }

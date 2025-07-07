@@ -1,33 +1,39 @@
 ﻿function Get-BlueCatParent {
     [cmdletbinding()]
-    param(
-        [Parameter(ValueFromPipeline)]
-        [Alias('Connection','Session')]
-        [BlueCat] $BlueCatSession = $Script:BlueCatSession,
 
-        [Parameter(Mandatory)]
-        [int] $ID
+    param(
+        [Parameter(ParameterSetName='byID',Mandatory)]
+        [Alias('EntityID')]
+        [int] $ID,
+
+        [Parameter(ParameterSetName='byObj',Mandatory,ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
+        [Alias('Entity')]
+        [PSCustomObject] $Object,
+
+        [Parameter()]
+        [Alias('Connection','Session')]
+        [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
 
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        $Query = "getParent?entityId=$($ID)"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
-        if (-not $result.id) {
-            throw "Entity Id $($ID) not found!"
-        }
+        $thisFN = (Get-PSCallStack)[0].Command
 
-        if ($result.type -ne 'Configuration') {
-            $objConfig = Trace-BluecatConfigFor -ID $ID -Connection $BlueCatSession
-            if ($result.type -ne 'View') {
-                $objView = Trace-BlueCatViewFor -ID $ID -Connection $BlueCatSession
+        if (-not $ID) {
+            if (-not $Entity.id) {
+                throw "$($thisFN): Invalid entity object"
             }
+            $ID = $Entity.id
         }
 
-        $convertParms = @{ BlueCatSession = $BlueCatSession }
-        if ($objConfig) { $convertParms.Configuration = $objConfig }
-        if ($objView)   { $convertParms.View          = $objView   }
-        $result | Convert-BlueCatReply @convertParms
+        $Query        = "getParent?entityId=$($ID)"
+        $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
+        if (-not $BlueCatReply.id) {
+            throw "Entity Id $($ID) parent not found: $($BlueCatReply)"
+        }
+
+        Get-BlueCatEntityById -ID $BlueCatReply.id -BlueCatSession $BlueCatSession
     }
 }

@@ -35,11 +35,11 @@
         # Retrieve the requested number of IP4 address records
         $Uri = "getEntities?parentId=$($Parent)&type=IP4Address&start=$($Start)&count=$($Count)"
         if ($Options) { $Uri += "&options=$($Options)" }
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Uri
+        $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Uri
 
-        if ($result.Count) {
-            Write-Verbose "$($thisFN): Retrieved $($result.Count) addresses under IP4Network #$($Parent)"
-            foreach ($bit in $result) {
+        if ($BlueCatReply.Count) {
+            Write-Verbose "$($thisFN): Retrieved $($BlueCatReply.Count) addresses under IP4Network #$($Parent)"
+            foreach ($bit in $BlueCatReply) {
                 $ip4addr = $bit | Convert-BlueCatReply -BlueCatSession $BlueCatSession
                 $ip4addr | Add-Member -MemberType NoteProperty -Name 'parent' -Value $parentInfo
 

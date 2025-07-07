@@ -103,7 +103,7 @@ function Resolve-BlueCatFQDN {
 
         $FQDNobj = New-Object -TypeName PSCustomObject
         $FQDNobj | Add-Member -MemberType NoteProperty -Name name      -Value $FQDN
-        $FQDNobj | Add-Member -MemberType NoteProperty -Name type      -Value FQDN
+        $FQDNobj | Add-Member -MemberType NoteProperty -Name type      -Value 'FQDN'
         $FQDNobj | Add-Member -MemberType NoteProperty -Name shortName -Value $notZone
 
         $hObj = $null

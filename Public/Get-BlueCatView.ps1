@@ -1,5 +1,6 @@
 ﻿function Get-BlueCatView {
     [cmdletbinding(DefaultParameterSetName='ViewNameConfigID')]
+
     param(
         [Parameter(Position=0,ParameterSetName='ViewNameConfigID')]
         [Parameter(Position=0,ParameterSetName='ViewNameConfigObj')]
@@ -36,29 +37,33 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
 
     process {
+        $thisFN = (Get-PSCallStack)[0].Command
+
         if ($All) {
             if ($EveryConfig) {
                 # Every View in Every Config
-                Write-Verbose 'Get-BlueCatView(ALL): All Views in Every Config'
+                Write-Verbose "$($thisFN)(ALL): All Views in Every Config"
                 [PsCustomObject[]] $ConfigList = Get-BlueCatConfig -All -BlueCatSession $BlueCatSession
             } elseif ($Config) {
                 # Every View in a specific Config (object input)
                 [PsCustomObject[]] $ConfigList = $Config
             } else {
                 # Get all views in a specific Config ID (or the default configuration, if set)
-                if (-not $ConfigID) { $ConfigID = $BlueCatSession.idConfig }
+                if (-not $ConfigID) {
+                    $ConfigID = $BlueCatSession.idConfig
+                }
 
                 if ($ConfigID) {
                     [PsCustomObject[]] $ConfigList = Get-BlueCatConfig -ConfigID $ConfigID -BlueCatSession $BlueCatSession
                 } else {
-                    Write-Warning 'Get-BlueCatView(ALL): No config specified and no default config is set'
+                    Write-Warning "$($thisFN)(ALL): No config specified and no default config is set"
                     return
                 }
             }
 
             # loop through selected config objects and pull all views from each
             foreach ($cfg in $ConfigList) {
-                Write-Verbose "Get-BlueCatView: ALL Views in Configuration '$($cfg.name)' (ID:$($cfg.id))"
+                Write-Verbose "$($thisFN): ALL Views in Configuration '$($cfg.name)' (ID:$($cfg.id))"
                 $Url = "getEntities?parentId=$($cfg.id)&start=0&count=100&type=View"
                 $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Url -BlueCatSession $BlueCatSession
 
@@ -78,24 +83,24 @@
                 }
                 if ($ConfigID) {
                     # Attempt to retrieve the view if we have a config to search in
-                    $objView = Get-BlueCatEntityByName -Connection $BlueCatSession -Name $Name -ParentID $ConfigID -EntityType 'View'
+                    $objView = Get-BlueCatEntityByName -Name $Name -ParentID $ConfigID -EntityType 'View' -Connection $BlueCatSession
                 }
             } else {
                 # Find a view using an ID, if supplied
                 if ((-not $ViewID) -and ($BlueCatSession.idView)) {
                     # No ID was supplied, but there is a default View so use that
-                    Write-Verbose 'Get-BlueCatView: Using default view for lookup'
+                    Write-Verbose "$($thisFN): Using default view for lookup"
                     $ViewID = $BlueCatSession.idView
                 }
                 if ($ViewID) {
                     # Lookup the View by the selected ID, otherwise do nothing and return NULL
-                    $objView = Get-BlueCatEntityById -BlueCatSession $BlueCatSession -ID $ViewID
+                    $objView = Get-BlueCatEntityById -ID $ViewID -BlueCatSession $BlueCatSession
                     if ($objView.type -ne 'View') {
                         # The supplied ID was not a View!
                         throw "Entity #$($ViewID) ($($result.name)) is not a View: $($result)"
                     }
                 } else {
-                    Write-Verbose 'Get-BlueCatView: No parameters provided and no default view is set'
+                    Write-Verbose "$($thisFN): No parameters provided and no default view is set"
                 }
             }
 

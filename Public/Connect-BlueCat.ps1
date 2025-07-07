@@ -13,11 +13,13 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
+        $thisFN = (Get-PSCallStack)[0].Command
+
         try {
             $result = [BlueCat]::new($Server, $Credential)
-            Write-Verbose "Connect-BlueCat: Logged in as $($result.Username)@$($result.Server) [$($result.SessionStart)]"
+            Write-Verbose "$($thisFN): Logged in as $($result.Username)@$($result.Server) [$($result.SessionStart)]"
         } catch {
-            Write-Verbose "Connect-BlueCat: Login as $($Credential.UserName)@$($Server) failed: $($_)"
+            Write-Verbose "$($thisFN): Login as $($Credential.UserName)@$($Server) failed: $($_)"
             throw $_
         }
 

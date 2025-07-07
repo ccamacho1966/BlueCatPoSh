@@ -20,8 +20,10 @@
     )
 
     process {
+        $thisFN = (Get-PSCallStack)[0].Command
+
         if ($All) {
-            Write-Verbose 'Get-BlueCatConfig: ALL'
+            Write-Verbose "$($thisFN): ALL"
             $Url = 'getEntities?parentId=0&start=0&count=100&type=Configuration'
             $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Url -BlueCatSession $BlueCatSession
 
@@ -30,16 +32,16 @@
         } else {
             if ($Name) {
                 # Attempt to lookup by name
-                Write-Verbose "Get-BlueCatConfig: Name='$($Name)'"
+                Write-Verbose "$($thisFN): Name='$($Name)'"
                 $objConf = Get-BlueCatEntityByName -Name $Name -EntityType 'Configuration' -BlueCatSession $BlueCatSession
             } else {
                 if ($ConfigID) {
-                    Write-Verbose "Get-BlueCatConfig: ID='$($ConfigID)'"
+                    Write-Verbose "$($thisFN): ID='$($ConfigID)'"
                 } elseif ($BlueCatSession.idConfig) {
                     $ConfigID = $BlueCatSession.idConfig
-                    Write-Verbose "Get-BlueCatConfig: Default Config ($($ConfigID))"
+                    Write-Verbose "$($thisFN): Default Config ($($ConfigID))"
                 } else {
-                    Write-Verbose 'Get-BlueCatConfig: No parameters provided and no default config is set'
+                    Write-Verbose "$($thisFN): No parameters provided and no default config is set"
                 }
 
                 if ($ConfigID) {

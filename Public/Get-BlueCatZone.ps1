@@ -1,34 +1,53 @@
 ﻿function Get-BlueCatZone {
-    [cmdletbinding()]
+    [cmdletbinding(DefaultParameterSetName='ViewID')]
+
     param(
+        [parameter(Mandatory)]
+        [Alias('Zone')]
+        [string] $Name,
+
+        [Parameter(ParameterSetName='ViewID')]
+        [int]$ViewID,
+
+        [Parameter(ParameterSetName='ViewObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject] $View,
+
         [Parameter()]
         [Alias('Connection','Session')]
-        [BlueCat]$BlueCatSession = $Script:BlueCatSession,
-
-        [parameter(Mandatory)]
-        [string] $Zone
+        [BlueCat]$BlueCatSession = $Script:BlueCatSession
     )
 
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        Confirm-Settings -BlueCatSession $BlueCatSession -Config -View
+        $thisFN = (Get-PSCallStack)[0].Command
+
+        $Zone = $Name.TrimEnd('\.')
+
+        if ($View)   {
+            $ViewID = $View.ID
+        }
+        if (-not $ViewID) {
+            $BlueCatSession | Confirm-Settings -View
+            $ViewID = $BlueCatSession.idView
+        }
 
         $zPath = $Zone.Split('\.')
         [array]::Reverse($zPath)
 
-        $zId = $BlueCatSession.idView
+        $zId = $ViewID
         foreach ($bit in $zPath) {
             $Query = "getEntityByName?parentId=$($zId)&type=Zone&name=$($bit)"
-            $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
-            if (-not $result.id) {
-                throw "$($result) Zone $($Zone) not found!"
+            $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+            if (-not $BlueCatReply.id) {
+                throw "Zone $($Zone) not found!"
             }
-            $zId = $result.id
+            $zId = $BlueCatReply.id
         }
-        $zObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+        $zObj = $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
 
-        Write-Verbose "Get-BlueCatZone: Selected #$($zObj.id) as '$($zObj.name)'"
+        Write-Verbose "$($thisFN): Selected #$($zObj.id) as '$($zObj.name)'"
         $zObj
     }
 }

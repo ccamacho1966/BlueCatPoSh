@@ -2,9 +2,11 @@
     [cmdletbinding()]
     param(
         [Parameter(Mandatory,Position=0,ParameterSetName='ByName')]
+        [Alias('ViewName')]
         [string] $Name,
 
         [Parameter(Mandatory,Position=0,ParameterSetName='ByID')]
+        [Alias('ViewID')]
         [int] $ID,
 
         [Parameter(ValueFromPipeline,Position=1)]
@@ -21,9 +23,13 @@
 
         if ($PSCmdlet.ParameterSetName -eq 'ByID') {
             $Query = "getEntityById?id=$($id)"
-            $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
-            if (-not $result.id) { throw "$($result) View #$($ID) not found!" }
-            if ($result.type -ne 'View') { throw "$($result) Entity #$($ID) ($($result.name)) is not a View!" }
+            $result = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+            if (-not $result.id) {
+                throw "$($result) View #$($ID) not found!"
+            }
+            if ($result.type -ne 'View') {
+                throw "$($result) Entity #$($ID) ($($result.name)) is not a View!"
+            }
 
             $Query = "getParent?entityId=$($ID)"
             $parent = Invoke-BlueCatApi -Connection $BlueCatSession -Method Get -Request $Query
@@ -34,7 +40,7 @@
             }
         } else {
             $Query = "getEntityByName?parentId=$($BlueCatSession.idConfig)&type=View&name=$($Name)"
-            $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
+            $result = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
             if (-not $result.id) {
                 throw "$($result) View $($name) not found!"
             }
@@ -44,6 +50,8 @@
         $BlueCatSession.View = $result.name
         Write-Verbose "Set-BlueCatView: Selected View #$($BlueCatSession.idView) as '$($BlueCatSession.View)'"
 
-        if ($PassThru) { $BlueCatSession | Get-BlueCatView }
+        if ($PassThru) {
+            $BlueCatSession | Get-BlueCatView
+        }
     }
 }

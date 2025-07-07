@@ -43,7 +43,7 @@ function Get-BlueCatExternalHost {
         $xHost = $Name.TrimEnd('\.')
 
         $Query = "getEntityByName?parentId=$($ViewID)&name=$($xHost)&type=ExternalHostRecord"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
+        $result = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
         if (-not $result.id) {
             # Record not found. Return nothing/null.

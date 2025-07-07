@@ -11,12 +11,15 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
 
     process {
+        $thisFN = (Get-PSCallStack)[0].Command
+
         if ((-not $BlueCatSession.idView) -and (!$Force)) {
-            Write-Warning 'Clear-BlueCatView: View was not set. Use ''-Force'' to suppress this warning.'
+            Write-Warning "$($thisFN): View was not set. Use '-Force' to suppress this warning."
+        } else {
+            Write-Verbose "$($thisFN): View cleared from connection: $($BlueCatSession.Username)@$($BlueCatSession.Server)"
         }
 
         $BlueCatSession.idView = 0
         $BlueCatSession.View = $null
-        Write-Verbose "Clear-BlueCatView: View cleared from connection: $($BlueCatSession.Username)@$($BlueCatSession.Server)"
     }
 }
