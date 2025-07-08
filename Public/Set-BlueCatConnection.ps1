@@ -1,5 +1,6 @@
-﻿function Set-BlueCatDefaultConnection {
+﻿function Set-BlueCatConnection {
     [cmdletbinding()]
+
     param(
         [parameter(ValueFromPipeline,Mandatory,Position=0)]
         [Alias('Connection','Session')]
@@ -9,7 +10,9 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
+        $thisFN = (Get-PSCallStack)[0].Command
+
         $Script:BlueCatSession = $BlueCatSession
-        Write-Verbose "Set-BlueCatDefaultConnection: $($Script:BlueCatSession.Username)@$($Script:BlueCatSession.Server)"
+        Write-Verbose "$($thisFN): $($Script:BlueCatSession.Username)@$($Script:BlueCatSession.Server)"
     }
 }
