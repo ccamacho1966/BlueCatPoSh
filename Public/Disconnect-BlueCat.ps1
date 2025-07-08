@@ -19,6 +19,10 @@ function Disconnect-BlueCat {
         }
 
         if ($BlueCatSession) {
+            # Remove this session for the internal list of active BlueCat sessions
+            [BlueCat[]] $Script:BlueCatAllSessions = $Script:BlueCatAllSessions | Where-Object -Property 'idTag' -NE -Value $BlueCatSession.idTag
+
+            # Invoke the API logout endpoint, but do not trigger an error if it fails
             $Result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request 'logout'
             Write-Verbose "$($thisFN): $($Result)"
         } else {

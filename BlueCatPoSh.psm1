@@ -18,19 +18,21 @@ module directly in the root module.
 #>
 
 class BlueCat {
-    [string]$Server
-    [psobject]$property
-    [string]$properties
-    [string]$Username
-    hidden [pscredential]$Credential
-    hidden [string]$Auth = ''
-    [datetime]$SessionStart
-    [datetime]$SessionRefresh
-    [int]$SessionCount = 0
-    [string]$View = ''
-    [int]$idView = 0
-    [string]$Config = ''
-    [int]$idConfig = 0
+    hidden static [int]$NextIndex = 1
+    hidden [string] $idTag
+    [string] $Server
+    [psobject] $property
+    hidden [string] $properties
+    [string] $Username
+    hidden [PSCredential] $Credential
+    hidden [string] $Auth = ''
+    [datetime] $SessionStart
+    [datetime] $SessionRefresh
+    [int] $SessionCount = 0
+    [string] $View = ''
+    [int] $idView = 0
+    [string] $Config = ''
+    [int] $idConfig = 0
 
     BlueCat([string]$Server, [pscredential]$Credential) {
         $this.Server     = $Server
@@ -39,9 +41,12 @@ class BlueCat {
 
         $this.Login()
 
-        $this.properties = Invoke-BlueCatApi -Connection $this -Method Get -Request 'getSystemInfo'
-        $this.property = Convert-BlueCatPropertyString -PropertyString $this.properties
-        [Management.Automation.PSMemberInfo[]]$visProp = [System.Management.Automation.PSPropertySet]::new('DefaultDisplayPropertySet',[string[]]@('Server','Username','Config','View'))
+        $this.properties = Invoke-BlueCatApi -Method Get -Request 'getSystemInfo' -Connection $this
+        $this.property   = Convert-BlueCatPropertyString -PropertyString $this.properties
+        $this.idTag      = "$([BlueCat]::NextIndex)-$($this.Username)@$($this.Server)"
+        [BlueCat]::NextIndex++
+        [string[]] $propList = @('Server','Username','Config','View')
+        [Management.Automation.PSMemberInfo[]]$visProp = [System.Management.Automation.PSPropertySet]::new('DefaultDisplayPropertySet',$propList)
         $this | Add-Member -MemberType MemberSet -Name PSStandardMembers -Value $visProp -PassThru
     } # BlueCat Class Constructor
 
@@ -51,7 +56,7 @@ class BlueCat {
         $uriPass = [uri]::EscapeDataString($this.Credential.GetNetworkCredential().Password)
         $Login="login?username=$($this.Credential.UserName)&password=$($uriPass)"
         try {
-            $response = Invoke-BlueCatApi -Connection $this -Method Get -Request $Login
+            $response = Invoke-BlueCatApi -Method Get -Request $Login -Connection $this
             $this.SessionRefresh = Get-Date
             if ($this.SessionCount -lt 1) {
                 $this.SessionStart = $this.SessionRefresh
