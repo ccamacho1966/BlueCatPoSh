@@ -1,5 +1,6 @@
 ﻿function Connect-BlueCat {
     [cmdletbinding()]
+
     param(
         [parameter(Mandatory)]
         [string] $Server,

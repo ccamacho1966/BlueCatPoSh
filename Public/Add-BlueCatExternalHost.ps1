@@ -49,7 +49,7 @@ function Add-BlueCatExternalHost {
             throw "$($thisFN): Failed to create $($xHost): $($result)"
         }
 
-        Write-Verbose "$($thisFN): Created #$($result) as '$($xHost)'"
+        Write-Verbose "$($thisFN): Created #$($BlueCatReply) as '$($xHost)'"
 
         if ($PassThru) { Get-BlueCatExternalHost @LookupParms }
     }

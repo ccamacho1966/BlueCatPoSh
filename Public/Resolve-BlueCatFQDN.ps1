@@ -1,8 +1,10 @@
 function Resolve-BlueCatFQDN {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
+
     param(
         [parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
+        [Alias('Name')]
         [string] $FQDN,
 
         [Parameter(ParameterSetName='ViewID')]
