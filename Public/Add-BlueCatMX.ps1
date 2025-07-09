@@ -1,11 +1,13 @@
-Function Add-BlueCatMX {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+function Add-BlueCatMX {
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
         [parameter(Mandatory)]
-        [string] $FQDN,
+        [Alias('FQDN')]
+        [string] $Name,
 
         [parameter(Mandatory)]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $Priority,
 
         [parameter(Mandatory)]
@@ -32,9 +34,9 @@ Function Add-BlueCatMX {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $NewHost = $Name.TrimEnd('\.')
+        $FQDN = $Name.TrimEnd('\.')
         $LookupParms = @{
-            Name           = $NewHost
+            Name           = $FQDN
             BlueCatSession = $BlueCatSession
         }
         if ($ViewID) {
@@ -62,10 +64,10 @@ Function Add-BlueCatMX {
             Write-Warning "$($thisFN): An external host entry exists for '$($MXInfo.external.name)'"
         }
 
-        $LookupRelay = $LookupParms
-        $NewRelay = $Relay.TrimEnd('\.')
-        $LookupRelay.FQDN = $NewRelay
-        $relayInfo = Resolve-BlueCatFQDN @LookupRelay
+        $LookupRelay      = $LookupParms
+        $NewRelay         = $Relay.TrimEnd('\.')
+        $LookupRelay.Name = $NewRelay
+        $relayInfo        = Resolve-BlueCatFQDN @LookupRelay
         if ($relayInfo.external) {
             $relayName = $relayInfo.external.name
         } elseif ($relayInfo.host) {
@@ -90,7 +92,7 @@ Function Add-BlueCatMX {
         Write-Verbose "$($thisFN): Created MX #$($BlueCatReply) for '$($MXInfo.name)' (points to $($relayName) priority $($Priority))"
 
         if ($PassThru) {
-            Get-BlueCatMX @LookupParms
+            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
         }
     }
 }

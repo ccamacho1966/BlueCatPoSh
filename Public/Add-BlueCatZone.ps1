@@ -70,7 +70,7 @@
         Write-Verbose "$($thisFN): Created #$($BlueCatReply) as '$($NewZone)'"
 
         if ($PassThru) {
-            Get-BlueCatZone @LookupParms
+            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
         }
     }
 }

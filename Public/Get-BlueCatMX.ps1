@@ -1,5 +1,6 @@
 Function Get-BlueCatMX {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
         [Parameter(Mandatory)]
         [Alias('HostName')]
@@ -52,26 +53,32 @@ Function Get-BlueCatMX {
 
         # Use the resolved zone info to build a new query and retrieve the MX record(s)
         $Query = "getEntitiesByName?parentId=$($Resolved.zone.id)&type=MXRecord&start=0&count=100&name=$($Resolved.shortName)"
-        $result = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+        [PSCustomObject[]] $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
-        if ($result.Count) {
+        if ($BlueCatReply.Count) {
             # Loop through the results and build an object
-            [PSCustomObject[]] $MXarray = @()
-            foreach ($bit in $result.SyncRoot) {
-                $MXentry = $bit | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-                Write-Verbose "$($thisFN): Selected MX #$($MXentry.id) as $($MXentry.property.linkedRecordName) (Priority $($MXentry.property.priority)) for $($MXentry.name)"
-                $MXarray += $MXentry
+            [PSCustomObject[]] $MXList = @()
+            foreach ($entry in $BlueCatReply) {
+                $MXentry = $entry | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+                $MXrecord = @{
+                    id       = $MXentry.id
+                    relay    = $MXentry.property.linkedRecordName
+                    priority = $MXentry.property.priority
+                }
+                if ($MXentry.property.ttl) {
+                    $MXrecord.ttl = $MXentry.property.ttl
+                }
+                Write-Verbose "$($thisFN): Selected MX #$($MXrecord.id) for $($FQDN) ($($MXrecord.relay) Priority $($MXentry.property.priority)) for $($MXentry.name)"
+                $MXList += $MXrecord
             }
             $MXobj = New-Object -TypeName PSCustomObject
-            $MXobj | Add-Member -MemberType NoteProperty -Name name      -Value $Name.TrimEnd('\.')
+            $MXobj | Add-Member -MemberType NoteProperty -Name name      -Value $FQDN
             $MXobj | Add-Member -MemberType NoteProperty -Name type      -Value 'MXList'
-            $MXobj | Add-Member -MemberType NoteProperty -Name MXList    -Value $MXarray
+            $MXobj | Add-Member -MemberType NoteProperty -Name MXList    -Value $MXList
+            $MXobj | Add-Member -MemberType NoteProperty -Name shortName -Value $Resolved.shortName
             $MXobj | Add-Member -MemberType NoteProperty -Name zone      -Value $Resolved.zone
             $MXobj | Add-Member -MemberType NoteProperty -Name config    -Value $Resolved.config
             $MXobj | Add-Member -MemberType NoteProperty -Name view      -Value $Resolved.view
-            $MXobj | Add-Member -MemberType NoteProperty -Name shortName -Value $Resolved.shortName
-            $MXobj | Add-Member -MemberType NoteProperty -Name Count     -Value $result.Count
-            $MXobj | Add-Member -MemberType NoteProperty -Name Length    -Value $result.Length
 
             # Return the MX object to caller
             $MXobj
