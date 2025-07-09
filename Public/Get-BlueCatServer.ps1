@@ -5,6 +5,14 @@ Function Get-BlueCatServer {
         [Alias('Server','HostName')]
         [string] $Name,
 
+        [Parameter(ParameterSetName='ConfigID')]
+        [ValidateRange(1, [int]::MaxValue)]
+        [int]$ConfigID,
+
+        [Parameter(ParameterSetName='ConfigObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject] $Config,
+
         [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession
@@ -13,50 +21,71 @@ Function Get-BlueCatServer {
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
 
     process {
-        $BlueCatSession | Confirm-Settings -Config
+        $thisFN = (Get-PSCallStack)[0].Command
 
-        $Query = "getEntityByName?parentId=$($BlueCatSession.idConfig)&type=Server&name=$($Name)"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
-        if (-not $result.id) { throw "Server '$($Name)' not found!" }
-
-        $sObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-        Write-Verbose "Get-BlueCatServer: Selected #$($sObj.id) as '$($sObj.name)'"
-
-        $Query = "getEntities?parentId=$($sObj.id)&type=PublishedServerInterface&start=0&count=10"
-        $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
-
-        if (-not $result.Count) {
-            # This server has no published interfaces
-            Write-Verbose "Get-BlueCatServer: No published interface found for '$($sObj.name)'"
-            $intArray = $null
-        } else {
-            $intArray = @()
-            foreach ($bit in $result.SyncRoot) {
-                $intEntry = $bit | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-                Write-Verbose "Get-BlueCatServer: Published Interface #$($intEntry.id) as '$($intEntry.name)' for '$($sObj.name)'"
-                $intArray += $intEntry
-            }
+        if ($Config.ID) {
+            # Use the Config ID supplied with the object
+            $ConfigID = $Config.ID
         }
-        $sObj | Add-Member -MemberType NoteProperty -Name published -Value $intArray
+        if (-not $ConfigID) {
+            # No Config ID or Object was supplied so try to use the session default
+            $BlueCatSession | Confirm-Settings -Config
+            $ConfigID = $BlueCatSession.idConfig
+        }
 
-        $Query = "getEntities?parentId=$($sObj.id)&type=NetworkServerInterface&start=0&count=10"
+        $Query = "getEntityByName?parentId=$($ConfigID)&type=Server&name=$($Name)"
+        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+        if (-not $BlueCatReply.id) {
+            throw "Server '$($Name)' not found!"
+        }
+
+        $ServerObj = $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+        Write-Verbose "$($thisFN): Selected #$($ServerObj.id) as '$($ServerObj.name)'"
+
+        # Pull a list of up to 10 published interfaces for this server
+        $Query = "getEntities?parentId=$($ServerObj.id)&type=PublishedServerInterface&start=0&count=10"
         try {
-            $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
-        } catch {  }
+            [PSCustomObject[]] $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
+        } catch {
+            # Continue processing
+        }
 
-        # This server has no interfaces
-        if (-not $result.Count) {
-            $intArray = $null
+        if (-not $BlueCatReply.Count) {
+            # This server has no published interfaces
+            Write-Verbose "$($thisFN): No published interfaces found for '$($ServerObj.name)'"
+            $Published = $null
         } else {
-            $intArray = @()
-            foreach ($bit in $result.SyncRoot) {
-                $intEntry = $bit | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-                Write-Verbose "BlueCat: Get-Server: Found Interface #$($intEntry.id) as '$($intEntry.name)' for '$($sObj.name)'"
-                $intArray += $intEntry
+            $Published = @()
+            foreach ($RawEntry in $BlueCatReply) {
+                $PubEntry = $RawEntry | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+                Write-Verbose "$($thisFN): Published Interface #$($PubEntry.id) as '$($PubEntry.name)' for '$($ServerObj.name)'"
+                $Published += $PubEntry
             }
         }
-        $sObj | Add-Member -MemberType NoteProperty -Name interface -Value $intArray
+        $ServerObj | Add-Member -MemberType NoteProperty -Name published -Value $Published
 
-        $sObj
+        # Pull a list of up to 10 network interfaces for this server
+        $Query = "getEntities?parentId=$($ServerObj.id)&type=NetworkServerInterface&start=0&count=10"
+        try {
+            [PSCustomObject[]] $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
+        } catch {
+            # Continue processing
+        }
+
+        if (-not $BlueCatReply.Count) {
+            # This server has no interfaces
+            Write-Verbose "$($thisFN): No network interfaces found for '$($ServerObj.name)'"
+            $Interfaces = $null
+        } else {
+            $Interfaces = @()
+            foreach ($RawEntry in $BlueCatReply) {
+                $IntfEntry = $RawEntry | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+                Write-Verbose "BlueCat: Get-Server: Found Interface #$($IntfEntry.id) as '$($IntfEntry.name)' for '$($ServerObj.name)'"
+                $Interfaces += $IntfEntry
+            }
+        }
+        $ServerObj | Add-Member -MemberType NoteProperty -Name interface -Value $Interfaces
+
+        $ServerObj
     }
 }
