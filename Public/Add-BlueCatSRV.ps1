@@ -22,7 +22,7 @@ function Add-BlueCatSRV {
         [ValidateRange(1, [int]::MaxValue)]
         [int] $Weight,
 
-        [int] $TTL, # = -1,
+        [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
         [int]$ViewID,
@@ -94,12 +94,12 @@ function Add-BlueCatSRV {
             $SRVName = '.'+$SRVInfo.name
         }
 
-        $Uri = "addSRVRecord?viewId=$($SRVInfo.view.id)&absoluteName=$($SRVName)&linkedRecordName=$($targetName)&port=$($Port)&priority=$($Priority)&weight=$($Weight)"
-        if ($TTL) {
-            $Uri += "&ttl=$($TTL)"
-        }
+        $Uri =  "addSRVRecord?viewId=$($SRVInfo.view.id)&absoluteName=$($SRVName)&linkedRecordName=$($targetName)"
+        $Uri += "&port=$($Port)&priority=$($Priority)&weight=$($Weight)&ttl=$($TTL)"
         $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Uri
-        if (-not $BlueCatReply) { throw "SRV creation failed for $($FQDN) - $($BlueCatReply)" }
+        if (-not $BlueCatReply) {
+            throw "SRV creation failed for $($FQDN) - $($BlueCatReply)"
+        }
 
         Write-Verbose "$($thisFN): Created SRV #$($BlueCatReply) for '$($SRVInfo.name)' (points to $($targetName) priority $($Priority))"
 

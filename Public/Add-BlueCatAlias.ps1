@@ -1,5 +1,5 @@
 ﻿function Add-BlueCatAlias {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
         [Parameter(Mandatory)]
@@ -10,7 +10,7 @@
         [Alias('Value')]
         [string] $LinkedHost,
 
-        [int] $TTL, # used to default to -1
+        [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
         [int]$ViewID,
@@ -66,10 +66,7 @@
 
         $LookupParms.FQDN = $LinkedHost
         $LinkedInfo = Resolve-BlueCatFQDN @LookupParms
-        $propString = "absoluteName=$($AliasInfo.name)|linkedRecordName=$($LinkedInfo.name)|"
-        if ($TTL) {
-            $propString += "ttl=$($TTL)|"
-        }
+        $propString = "absoluteName=$($AliasInfo.name)|linkedRecordName=$($LinkedInfo.name)|ttl=$($TTL)|"
         if ($LinkedInfo.host) {
             $propString += "linkedParentZoneName=$($LinkedInfo.zone.name)|"
         } elseif (-not $LinkedInfo.external) {
@@ -85,7 +82,9 @@
         $Body = $aliasObj | ConvertTo-Json
         $Query = "addEntity?parentId=$($AliasInfo.zone.id)"
         $result = Invoke-BlueCatApi -Method Post -Request $Query -Body $Body -BlueCatSession $BlueCatSession
-        if (-not $result.id) { throw "Alias creation failed for $($Name) - $($result)" }
+        if (-not $result.id) {
+            throw "Alias creation failed for $($Name) - $($result)"
+        }
 
         Write-Verbose "$($thisFN): Created #$($result) as '$($AliasInfo.name)' (points to '$($LinkedInfo.name)')"
 

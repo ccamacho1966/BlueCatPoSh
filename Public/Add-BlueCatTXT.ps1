@@ -10,7 +10,7 @@
         [ValidateNotNullOrEmpty()]
         [string] $Text,
 
-        [int] $TTL, # Used to default to -1
+        [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
         [int]$ViewID,
@@ -67,10 +67,7 @@
         }
 
         $TextString = [uri]::EscapeDataString($Text.Trim('"'))
-        $Uri = "addTXTRecord?viewId=$($TextInfo.view.id)&absoluteName=$($TextName)&txt=$($TextString)"
-        if ($TTL) {
-            $Uri += "&ttl=$($TTL)"
-        }
+        $Uri = "addTXTRecord?viewId=$($TextInfo.view.id)&absoluteName=$($TextName)&txt=$($TextString)&ttl=$($TTL)"
         $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Uri -BlueCatSession $BlueCatSession
         if (-not $BlueCatReply) {
             throw "TXT creation failed for $($FQDN) - $($BlueCatReply)"
@@ -79,7 +76,7 @@
         Write-Verbose "Add-BlueCatTXT: Created #$($BlueCatReply) for '$($TextInfo.name)'"
 
         if ($PassThru) {
-            Get-BlueCatTXT @LookupParms
+            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
         }
     }
 }

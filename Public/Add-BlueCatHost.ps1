@@ -9,7 +9,7 @@
         [parameter(Mandatory)]
         [string[]] $Addresses, # accept one or more strings
 
-        [int] $TTL, # Used to default to -1
+        [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
         [int]$ViewID,
@@ -68,8 +68,12 @@
             }
         }
 
-        $Query = "addHostRecord?viewId=$($HostInfo.view.id)&absoluteName=$($HostInfo.name)&addresses=$($ipList)"
-        if ($TTL) { $Query += "&ttl=$($TTL)" }
+        if ($HostInfo.name -eq $HostInfo.zone.name) {
+            $ApiHostname = ".$($HostInfo.name)"
+        } else {
+            $ApiHostname = $HostInfo.name
+        }
+        $Query = "addHostRecord?viewId=$($HostInfo.view.id)&absoluteName=$($ApiHostname)&addresses=$($ipList)&ttl=$($TTL)"
         $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Query -BlueCatSession $BlueCatSession
         if (-not $BlueCatReply.id) {
             throw "Host creation failed for $($NewHost) - $($BlueCatReply)"
@@ -78,7 +82,7 @@
         Write-Verbose "$($thisFN): Created #$($BlueCatReply.id) as '$($HostInfo.name)' (IP(s): $($ipList))"
 
         if ($PassThru) {
-            Get-BlueCatHost @LookupParms
+            Get-BlueCatEntityById -ID $BlueCatReply.id -BlueCatSession $BlueCatSession
         }
     }
 }

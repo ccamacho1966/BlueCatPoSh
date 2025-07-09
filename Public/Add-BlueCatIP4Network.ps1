@@ -1,5 +1,5 @@
 ﻿function Add-BlueCatIP4Network {
-    [cmdletbinding()]
+    [CmdletBinding()]
 
     Param(
         [Parameter(Mandatory)]

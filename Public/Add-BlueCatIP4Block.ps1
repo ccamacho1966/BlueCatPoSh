@@ -1,5 +1,5 @@
 ﻿function Add-BlueCatIP4Block {
-    [cmdletbinding()]
+    [CmdletBinding()]
 
     param(
         [Parameter()]
@@ -12,10 +12,12 @@
 
         [Parameter(Mandatory,ParameterSetName='Range')]
         [ValidateNotNullOrEmpty()]
+        [Alias('StartAddress')]
         [string] $Start,
 
         [Parameter(Mandatory,ParameterSetName='Range')]
         [ValidateNotNullOrEmpty()]
+        [Alias('EndAddress')]
         [string] $End,
 
         [int] $Parent,

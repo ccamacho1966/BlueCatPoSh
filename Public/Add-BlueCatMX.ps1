@@ -13,7 +13,7 @@ function Add-BlueCatMX {
         [parameter(Mandatory)]
         [string] $Relay,
 
-        [int] $TTL, # = -1,
+        [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
         [int]$ViewID,
@@ -82,12 +82,11 @@ function Add-BlueCatMX {
             $MXName = '.'+$MXInfo.name
         }
 
-        $Uri = "addMXRecord?viewId=$($MXInfo.view.id)&absoluteName=$($MXName)&priority=$($Priority)&linkedRecordName=$($relayName)"
-        if ($TTL) {
-            $Uri += "&ttl=$($TTL)"
-        }
+        $Uri = "addMXRecord?viewId=$($MXInfo.view.id)&absoluteName=$($MXName)&priority=$($Priority)&linkedRecordName=$($relayName)&ttl=$($TTL)"
         $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Uri
-        if (-not $BlueCatReply) { throw "MX creation failed for $($FQDN) - $($BlueCatReply)" }
+        if (-not $BlueCatReply) {
+            throw "MX creation failed for $($FQDN) - $($BlueCatReply)"
+        }
 
         Write-Verbose "$($thisFN): Created MX #$($BlueCatReply) for '$($MXInfo.name)' (points to $($relayName) priority $($Priority))"
 
