@@ -43,23 +43,24 @@ function Get-BlueCatIPContainerByIP {
         Write-Verbose "$($thisFN): Find network/block containing [$($Address)] under parent $($BlockCheck.type) $($BlockCheck.name) (ID:$($BlockCheck.id))"
 
         $Uri = "getIPRangedByIP?containerId=$($BlockCheck.id)&address=$($Address)&type=$($SearchType)"
-        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Uri -BlueCatSession $BlueCatSession | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Uri -BlueCatSession $BlueCatSession
 
         if ($BlueCatReply.id) {
-            if ($BlueCatReply.property.start) {
-                $IpSpec = "$($BlueCatReply.property.start) - $($BlueCatReply.property.end)"
+            $IpContainer = $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+            if ($IpContainer.property.start) {
+                $IpSpec = "$($IpContainer.property.start) - $($IpContainer.property.end)"
             } else {
-                $IpSpec = $BlueCatReply.property.CIDR
+                $IpSpec = $IpContainer.property.CIDR
             }
 
-            if ($BlueCatReply.name) {
-                $Label = "'$($BlueCatReply.name)'"
+            if ($IpContainer.name) {
+                $Label = "'$($IpContainer.name)'"
             } else {
-                $Label = "ID:$($BlueCatReply.id)"
+                $Label = "ID:$($IpContainer.id)"
             }
 
-            Write-Verbose "$($thisFN): Returning $($BlueCatReply.type) $($Label) ($($IpSpec))"
-            $BlueCatReply
+            Write-Verbose "$($thisFN): Returning $($IpContainer.type) $($Label) ($($IpSpec))"
+            $IpContainer
         } else {
             Write-Verbose "$($thisFN): No IP Container found for $($Address)"
         }
