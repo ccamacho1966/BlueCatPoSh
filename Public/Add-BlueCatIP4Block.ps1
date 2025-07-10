@@ -48,12 +48,26 @@
             throw "ID:$($Parent) type is not IP4Block or Configuration (Type: $($BlockCheck.type))"
         }
 
+        $BlockDescription = "$($BlockCheck.type) "
+        if ($BlockCheck.name) {
+            # Build description based on name
+            $BlockDescription += $BlockCheck.name
+        } else {
+            # Configurations must be named, so this is an unnamed block
+            if ($BlockCheck.property.CIDR) {
+                $BlockDescription += $BlockCheck.property.CIDR
+            } elseif ($BlockCheck.property.start) {
+                $BlockDescription += "$($BlockCheck.property.start)-$($BlockCheck.property.end)"
+            }
+        }
+        $BlockDescription += " (ID:$($BlockCheck.id))"
+
         if ($CIDR) {
             $Query = "addIP4BlockByCIDR?parentId=$($Parent)&CIDR=$($CIDR)"
-            Write-Verbose "Attempting to add CIDR block: $($CIDR) to entity #$($Parent)"
+            Write-Verbose "$($thisFN): Add CIDR block $($CIDR) to $($BlockDescription)"
         } else {
             $Query = "addIP4BlockByRange?parentId=$($Parent)&start=$($Start)&end=$($End)"
-            Write-Verbose "Attempting to add range: $($Start)-$($End) to entity #$($Parent)"
+            Write-Verbose "$($thisFN): Add range $($Start)-$($End) to $($BlockDescription)"
         }
 
         if ($Property.Name -and $Name) {
