@@ -82,7 +82,7 @@
         $Body = $aliasObj | ConvertTo-Json
         $Query = "addEntity?parentId=$($AliasInfo.zone.id)"
         $result = Invoke-BlueCatApi -Method Post -Request $Query -Body $Body -BlueCatSession $BlueCatSession
-        if (-not $result.id) {
+        if (-not $result) {
             throw "Alias creation failed for $($Name) - $($result)"
         }
 
