@@ -60,20 +60,31 @@
             Write-Warning "Add-BlueCatTXT: An external host entry exists for '$($TextInfo.external.name)'"
         }
 
-        if ($TextInfo.shortName) {
-            $TextName = $TextInfo.name
-        } else {
-            $TextName = '.'+$TextInfo.name
+        $CreateTXTRecord = @{
+            Method         = 'Post'
+            BlueCatSession = $BlueCatSession
         }
+        if ($TextInfo.shortName) {
+            $Body = @{
+                type       = 'TXTRecord'
+                name       = $TextInfo.shortName
+                properties = "ttl=$($TTL)|absoluteName=$($TextInfo.name)|txt=$($Text.Trim('"'))|"
+            }
+            $CreateTXTRecord.Body = $Body | ConvertTo-Json
+            $Uri = "addEntity?parentId=$($TextInfo.zone.id)"
+        } else {
+            $TextName   = '.'+$TextInfo.name
+            $TextString = [uri]::EscapeDataString($Text.Trim('"'))
+            $Uri        = "addTXTRecord?viewId=$($TextInfo.view.id)&absoluteName=$($TextName)&txt=$($TextString)&ttl=$($TTL)"
+        }
+        $CreateTXTRecord.Request = $Uri
 
-        $TextString = [uri]::EscapeDataString($Text.Trim('"'))
-        $Uri = "addTXTRecord?viewId=$($TextInfo.view.id)&absoluteName=$($TextName)&txt=$($TextString)&ttl=$($TTL)"
-        $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Uri -BlueCatSession $BlueCatSession
+        $BlueCatReply = Invoke-BlueCatApi @CreateTXTRecord
         if (-not $BlueCatReply) {
             throw "TXT creation failed for $($FQDN) - $($BlueCatReply)"
         }
 
-        Write-Verbose "Add-BlueCatTXT: Created #$($BlueCatReply) for '$($TextInfo.name)'"
+        Write-Verbose "$($thisFN): Created ID:$($BlueCatReply) for '$($TextInfo.name)'"
 
         if ($PassThru) {
             Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
