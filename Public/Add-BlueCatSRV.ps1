@@ -3,6 +3,7 @@ function Add-BlueCatSRV {
 
     param(
         [parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [Alias('FQDN')]
         [string] $Name,
 
@@ -76,7 +77,7 @@ function Add-BlueCatSRV {
         $LookupTarget      = $LookupParms
         $NewTarget         = $Target.TrimEnd('\.')
         $LookupTarget.Name = $NewTarget
-        $targetInfo        = Resolve-BlueCatFQDN @LookupRelay
+        $targetInfo        = Resolve-BlueCatFQDN @LookupTarget
         if ($targetInfo.host) {
             $targetName = $targetInfo.host.name
             if ($targetName.external) {
