@@ -130,7 +130,7 @@ function Resolve-BlueCatFQDN {
 
         try {
             $xhObj = Get-BlueCatExternalHost -BlueCatSession $BlueCatSession -Name $FQDNobj.name 4>$null
-            if (!$Quiet) {
+            if ($xhObj -and (-not $Quiet)) {
                 Write-Verbose "Resolve-BlueCatFQDN: Selected External Host #$($xhObj.id) as '$($xhObj.name)'"
             }
         } catch {

@@ -69,8 +69,10 @@ function Add-BlueCatMX {
         $LookupRelay.Name = $NewRelay
         $relayInfo        = Resolve-BlueCatFQDN @LookupRelay
         if ($relayInfo.external) {
+            Write-Verbose "$($thisFN): Relay '$($NewRelay)' is an EXTERNAL host (ID:$($relayInfo.external.id))"
             $relayName = $relayInfo.external.name
         } elseif ($relayInfo.host) {
+            Write-Verbose "$($thisFN): Found host record for relay '$($NewRelay)' (ID:$($relayInfo.host.id))"
             $relayName = $relayInfo.host.name
         } else {
             throw "Aborting MX record creation: No host record found for relay $($NewRelay)"
