@@ -7,7 +7,7 @@ function Add-BlueCatMX {
         [string] $Name,
 
         [parameter(Mandatory)]
-        [ValidateRange(1, [int]::MaxValue)]
+        [ValidateRange(0, [int]::MaxValue)]
         [int] $Priority,
 
         [parameter(Mandatory)]
