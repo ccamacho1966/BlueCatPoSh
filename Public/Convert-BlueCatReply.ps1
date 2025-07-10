@@ -12,6 +12,15 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
+        $thisFN = (Get-PSCallStack)[0].Command
+
+        # Check for id=0 which indicates no actual BlueCat entity in the object
+        if (-not $RawObject.id) {
+            # Not a valid object. Issue a warning and return the raw object as-is.
+            Write-Warning "$($thisFN): Invalid BlueCat object passed - returning object as-is"
+            return $RawObject
+        }
+
         # All BlueCat objects have an ID, name, and object type
         $newObj = New-Object -TypeName PSCustomObject
         $newObj | Add-Member -MemberType NoteProperty -Name 'id'   -Value $RawObject.id
