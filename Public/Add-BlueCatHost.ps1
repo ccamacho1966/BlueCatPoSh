@@ -75,14 +75,14 @@
         }
         $Query = "addHostRecord?viewId=$($HostInfo.view.id)&absoluteName=$($ApiHostname)&addresses=$($ipList)&ttl=$($TTL)"
         $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Query -BlueCatSession $BlueCatSession
-        if (-not $BlueCatReply.id) {
+        if (-not $BlueCatReply) {
             throw "Host creation failed for $($NewHost) - $($BlueCatReply)"
         }
 
-        Write-Verbose "$($thisFN): Created #$($BlueCatReply.id) as '$($HostInfo.name)' (IP(s): $($ipList))"
+        Write-Verbose "$($thisFN): Created Host Record for '$($HostInfo.name)' - ID:$($($BlueCatReply)), IP(s): $($ipList)"
 
         if ($PassThru) {
-            Get-BlueCatEntityById -ID $BlueCatReply.id -BlueCatSession $BlueCatSession
+            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
         }
     }
 }
