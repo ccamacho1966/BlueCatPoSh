@@ -1,5 +1,6 @@
-﻿function Add-BlueCatZone {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+﻿function Add-BlueCatZone
+{
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
         [parameter(Mandatory)]
@@ -29,11 +30,12 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $NewZone = $Name.TrimEnd('\.')
+        $NewZone = $Name | Test-ValidFQDN
         $LookupParms = @{
             Name           = $NewZone
             BlueCatSession = $BlueCatSession
         }
+
         if ($ViewID) {
             $LookupParms.ViewID = $ViewID
         } elseif ($View)   {
@@ -60,9 +62,13 @@
             $propString='deployable=true|'
         }
 
-        $Uri = "addZone?parentId=$($ViewID)&absoluteName=$($NewZone)&properties=$($propString)"
-        $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Uri -BlueCatSession $BlueCatSession
+        $CreateZone = @{
+            Method         = 'Post'
+            Request        = "addZone?parentId=$($ViewID)&absoluteName=$($NewZone)&properties=$($propString)"
+            BlueCatSession = $BlueCatSession
+        }
 
+        $BlueCatReply = Invoke-BlueCatApi @CreateZone
         if (-not $BlueCatReply) {
             throw "Host creation failed for $($NewHost) - $($BlueCatReply)"
         }
