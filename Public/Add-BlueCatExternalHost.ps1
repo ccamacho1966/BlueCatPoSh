@@ -1,5 +1,6 @@
-function Add-BlueCatExternalHost {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+function Add-BlueCatExternalHost
+{
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
         [parameter(Mandatory)]
@@ -26,11 +27,13 @@ function Add-BlueCatExternalHost {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $xHost = $Name.TrimEnd('\.')
+        $xHost = $Name | Test-ValidFQDN
+
         $LookupParms = @{
             Name           = $xHost
             BlueCatSession = $BlueCatSession
         }
+
         if ($ViewID) {
             $LookupParms.ViewID = $ViewID
         } elseif ($View)   {
@@ -45,12 +48,15 @@ function Add-BlueCatExternalHost {
 
         $Uri = "addExternalHostRecord?viewId=$($ViewID)&name=$($xHost)"
         $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Uri -Connection $BlueCatSession
-        if (!$BlueCatReply) {
+
+        if (-not $BlueCatReply) {
             throw "$($thisFN): Failed to create $($xHost): $($result)"
         }
 
         Write-Verbose "$($thisFN): Created #$($BlueCatReply) as '$($xHost)'"
 
-        if ($PassThru) { Get-BlueCatExternalHost @LookupParms }
+        if ($PassThru) {
+            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+        }
     }
 }
