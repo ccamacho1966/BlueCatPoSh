@@ -1,4 +1,5 @@
-﻿function Add-BlueCatAlias {
+﻿function Add-BlueCatAlias
+{
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
@@ -31,7 +32,7 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $Name = $Name.TrimEnd('\.')
+        $Name = $Name | Test-ValidFQDN
         $LookupParms = @{
             FQDN           = $Name
             BlueCatSession = $BlueCatSession
@@ -64,9 +65,9 @@
             Write-Warning "$($thisFN): An external host entry exists for '$($AliasInfo.external.name)'"
         }
 
-        $LookupParms.FQDN = $LinkedHost
+        $LookupParms.FQDN = $LinkedHost | Test-ValidFQDN
         $LinkedInfo = Resolve-BlueCatFQDN @LookupParms
-        $propString = "absoluteName=$($AliasInfo.name)|linkedRecordName=$($LinkedInfo.name)|ttl=$($TTL)|"
+        $propString = "ttl=$($TTL)|absoluteName=$($AliasInfo.name)|linkedRecordName=$($LinkedInfo.name)|"
         if ($LinkedInfo.host) {
             $propString += "linkedParentZoneName=$($LinkedInfo.zone.name)|"
         } elseif (-not $LinkedInfo.external) {
@@ -74,23 +75,27 @@
             throw "$(LinkedHost) is not in the database. A host or external host entry must be created first!"
         }
 
-        $aliasObj = New-Object -TypeName psobject
-        $aliasObj | Add-Member -MemberType NoteProperty -Name name       -Value $AliasInfo.shortName
-        $aliasObj | Add-Member -MemberType NoteProperty -Name type       -Value 'AliasRecord'
-        $aliasObj | Add-Member -MemberType NoteProperty -Name properties -Value $propString
+        $Body = @{
+            type       = 'AliasRecord'
+            name       = $AliasInfo.shortName
+            properties = $propString
+        }
+        $CreateAliasRecord = @{
+            Method         = 'Post'
+            Request        = "addEntity?parentId=$($AliasInfo.zone.id)"
+            Body           = ($Body | ConvertTo-Json)
+            BlueCatSession = $BlueCatSession
+        }
 
-        $Body = $aliasObj | ConvertTo-Json
-        $Query = "addEntity?parentId=$($AliasInfo.zone.id)"
-        $result = Invoke-BlueCatApi -Method Post -Request $Query -Body $Body -BlueCatSession $BlueCatSession
+        $result = Invoke-BlueCatApi @CreateAliasRecord
         if (-not $result) {
-            throw "Alias creation failed for $($Name) - $($result)"
+            throw "Alias creation failed for $($Name)"
         }
 
         Write-Verbose "$($thisFN): Created #$($result) as '$($AliasInfo.name)' (points to '$($LinkedInfo.name)')"
 
         if ($PassThru) {
-            $LookupParms.FQDN = $Name
-            Get-BlueCatAlias @LookupParms
+            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
         }
     }
 }
