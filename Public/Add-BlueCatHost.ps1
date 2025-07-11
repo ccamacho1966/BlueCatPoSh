@@ -1,5 +1,6 @@
-﻿function Add-BlueCatHost {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+﻿function Add-BlueCatHost
+{
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
         [parameter(Mandatory)]
@@ -30,11 +31,12 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $NewHost = $Name.TrimEnd('\.')
+        $NewHost = $Name | Test-ValidFQDN
         $LookupParms = @{
             Name           = $NewHost
             BlueCatSession = $BlueCatSession
         }
+
         if ($ViewID) {
             $LookupParms.ViewID = $ViewID
         } elseif ($View)   {
@@ -68,15 +70,21 @@
             }
         }
 
-        if ($HostInfo.name -eq $HostInfo.zone.name) {
-            $ApiHostname = ".$($HostInfo.name)"
-        } else {
-            $ApiHostname = $HostInfo.name
+        $Body = @{
+            type       = 'HostRecord'
+            name       = $HostInfo.shortName
+            properties = "ttl=$($TTL)|absoluteName=$($SRVInfo.name)|addresses=$($ipList)|reverseRecord=true|"
         }
-        $Query = "addHostRecord?viewId=$($HostInfo.view.id)&absoluteName=$($ApiHostname)&addresses=$($ipList)&ttl=$($TTL)"
-        $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Query -BlueCatSession $BlueCatSession
+        $CreateHostRecord = @{
+            Method         = 'Post'
+            Request        = "addEntity?parentId=$($HostInfo.zone.id)"
+            Body           = ($Body | ConvertTo-Json)
+            BlueCatSession = $BlueCatSession
+        }
+
+        $BlueCatReply = Invoke-BlueCatApi @CreateHostRecord
         if (-not $BlueCatReply) {
-            throw "Host creation failed for $($NewHost) - $($BlueCatReply)"
+            throw "Host creation failed for $($NewHost)"
         }
 
         Write-Verbose "$($thisFN): Created Host Record for '$($HostInfo.name)' - ID:$($($BlueCatReply)), IP(s): $($ipList)"

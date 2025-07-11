@@ -1,4 +1,5 @@
-function Add-BlueCatMX {
+function Add-BlueCatMX
+{
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
@@ -34,7 +35,7 @@ function Add-BlueCatMX {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $FQDN = $Name.TrimEnd('\.')
+        $FQDN = $Name | Test-ValidFQDN
         $LookupParms = @{
             Name           = $FQDN
             BlueCatSession = $BlueCatSession
@@ -65,29 +66,37 @@ function Add-BlueCatMX {
         }
 
         $LookupRelay      = $LookupParms
-        $NewRelay         = $Relay.TrimEnd('\.')
+        $NewRelay         = $Relay | Test-ValidFQDN
         $LookupRelay.Name = $NewRelay
         $relayInfo        = Resolve-BlueCatFQDN @LookupRelay
-        if ($relayInfo.external) {
-            Write-Verbose "$($thisFN): Relay '$($NewRelay)' is an EXTERNAL host (ID:$($relayInfo.external.id))"
-            $relayName = $relayInfo.external.name
-        } elseif ($relayInfo.host) {
-            Write-Verbose "$($thisFN): Found host record for relay '$($NewRelay)' (ID:$($relayInfo.host.id))"
+        if ($relayInfo.host) {
             $relayName = $relayInfo.host.name
+            Write-Verbose "$($thisFN): Found host record for relay '$($NewRelay)' (ID:$($relayInfo.host.id))"
+            if ($relayInfo.external) {
+                Write-Warning "$($thisFN): Both internal and external host entries found for $($NewRelay)"
+            }
+        } elseif ($relayInfo.external) {
+            $relayName = $relayInfo.external.name
+            Write-Verbose "$($thisFN): Found EXTERNAL host record for relay '$($NewRelay)' (ID:$($relayInfo.external.id))"
         } else {
             throw "Aborting MX record creation: No host record found for relay $($NewRelay)"
         }
 
-        if ($MXInfo.shortName) {
-            $MXName = $MXInfo.name
-        } else {
-            $MXName = '.'+$MXInfo.name
+        $Body = @{
+            type       = 'MXRecord'
+            name       = $MXInfo.shortName
+            properties = "ttl=$($TTL)|absoluteName=$($MXInfo.name)|linkedRecordName=$($relayName)|priority=$($Priority)|"
+        }
+        $CreateMXRecord = @{
+            Method         = 'Post'
+            Request        = "addEntity?parentId=$($MXInfo.zone.id)"
+            Body           = ($Body | ConvertTo-Json)
+            BlueCatSession = $BlueCatSession
         }
 
-        $Uri = "addMXRecord?viewId=$($MXInfo.view.id)&absoluteName=$($MXName)&priority=$($Priority)&linkedRecordName=$($relayName)&ttl=$($TTL)"
-        $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Uri
+        $BlueCatReply = Invoke-BlueCatApi @CreateMXRecord
         if (-not $BlueCatReply) {
-            throw "MX creation failed for $($FQDN) - $($BlueCatReply)"
+            throw "MX creation failed for $($FQDN)"
         }
 
         Write-Verbose "$($thisFN): Created MX #$($BlueCatReply) for '$($MXInfo.name)' (points to $($relayName) priority $($Priority))"

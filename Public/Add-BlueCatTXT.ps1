@@ -1,5 +1,6 @@
-﻿function Add-BlueCatTXT {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+﻿function Add-BlueCatTXT
+{
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
         [parameter(Mandatory)]
@@ -31,7 +32,7 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $FQDN = $Name.TrimEnd('\.')
+        $FQDN = $Name | Test-ValidFQDN
         $LookupParms = @{
             Name           = $FQDN
             BlueCatSession = $BlueCatSession
@@ -57,31 +58,24 @@
         Write-Verbose "$($thisFN): Selected Zone #$($TextInfo.zone.id) as '$($TextInfo.zone.name)'"
 
         if ($TextInfo.external) {
-            Write-Warning "Add-BlueCatTXT: An external host entry exists for '$($TextInfo.external.name)'"
+            Write-Warning "$($thisFN): An external host entry exists for '$($TextInfo.external.name)'"
         }
 
+        $Body = @{
+            type       = 'TXTRecord'
+            name       = $TextInfo.shortName
+            properties = "ttl=$($TTL)|absoluteName=$($TextInfo.name)|txt=$($Text.Trim('"'))|"
+        }
         $CreateTXTRecord = @{
             Method         = 'Post'
+            Request        = "addEntity?parentId=$($TextInfo.zone.id)"
+            Body           = ($Body | ConvertTo-Json)
             BlueCatSession = $BlueCatSession
         }
-        if ($TextInfo.shortName) {
-            $Body = @{
-                type       = 'TXTRecord'
-                name       = $TextInfo.shortName
-                properties = "ttl=$($TTL)|absoluteName=$($TextInfo.name)|txt=$($Text.Trim('"'))|"
-            }
-            $CreateTXTRecord.Body = $Body | ConvertTo-Json
-            $Uri = "addEntity?parentId=$($TextInfo.zone.id)"
-        } else {
-            $TextName   = '.'+$TextInfo.name
-            $TextString = [uri]::EscapeDataString($Text.Trim('"'))
-            $Uri        = "addTXTRecord?viewId=$($TextInfo.view.id)&absoluteName=$($TextName)&txt=$($TextString)&ttl=$($TTL)"
-        }
-        $CreateTXTRecord.Request = $Uri
 
         $BlueCatReply = Invoke-BlueCatApi @CreateTXTRecord
         if (-not $BlueCatReply) {
-            throw "TXT creation failed for $($FQDN) - $($BlueCatReply)"
+            throw "TXT record creation failed for $($FQDN)"
         }
 
         Write-Verbose "$($thisFN): Created ID:$($BlueCatReply) for '$($TextInfo.name)'"

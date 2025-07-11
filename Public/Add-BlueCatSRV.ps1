@@ -1,4 +1,5 @@
-function Add-BlueCatSRV {
+function Add-BlueCatSRV
+{
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
@@ -44,7 +45,7 @@ function Add-BlueCatSRV {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $FQDN = $Name.TrimEnd('\.')
+        $FQDN = $Name | Test-ValidFQDN
         $LookupParms = @{
             Name           = $FQDN
             BlueCatSession = $BlueCatSession
@@ -77,6 +78,7 @@ function Add-BlueCatSRV {
         $LookupTarget      = $LookupParms
         $NewTarget         = $Target.TrimEnd('\.')
         $LookupTarget.Name = $NewTarget
+
         $targetInfo        = Resolve-BlueCatFQDN @LookupTarget
         if ($targetInfo.host) {
             $targetName = $targetInfo.host.name
@@ -89,28 +91,21 @@ function Add-BlueCatSRV {
             throw "Aborting SRV record creation: No host record found for target $($NewTarget)"
         }
 
+        $Body = @{
+            type       = 'SRVRecord'
+            name       = $SRVInfo.shortName
+            properties = "ttl=$($TTL)|absoluteName=$($SRVInfo.name)|linkedRecordName=$($NewTarget)|port=$($Port)|priority=$($Priority)|weight=$($Weight)|"
+        }
         $CreateSRVRecord = @{
             Method         = 'Post'
+            Request        = "addEntity?parentId=$($SRVInfo.zone.id)"
+            Body           = ($Body | ConvertTo-Json)
             BlueCatSession = $BlueCatSession
         }
-        if ($SRVInfo.shortName) {
-            $Body = @{
-                type       = 'SRVRecord'
-                name       = $SRVInfo.shortName
-                properties = "ttl=$($TTL)|absoluteName=$($SRVInfo.name)|linkedRecordName=$($NewTarget)|port=$($Port)|priority=$($Priority)|weight=$($Weight)|"
-            }
-            $CreateSRVRecord.Body = $Body | ConvertTo-Json
-            $Uri = "addEntity?parentId=$($SRVInfo.zone.id)"
-        } else {
-            $SRVName   = '.'+$SRVInfo.name
-            $Uri       = "addSRVRecord?viewId=$($SRVInfo.view.id)&absoluteName=$($SRVName)&linkedRecordName=$($NewTarget)"
-            $Uri      += "&port=$($Port)&priority=$($Priority)&weight=$($Weight)&ttl=$($TTL)"
-        }
-        $CreateSRVRecord.Request = $Uri
 
         $BlueCatReply = Invoke-BlueCatApi @CreateSRVRecord
         if (-not $BlueCatReply) {
-            throw "SRV creation failed for $($FQDN) - $($BlueCatReply)"
+            throw "SRV record creation failed for $($FQDN)"
         }
 
         Write-Verbose "$($thisFN): Created SRV #$($BlueCatReply) for '$($SRVInfo.name)' (points to $($targetName) priority $($Priority))"
