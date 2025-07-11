@@ -89,15 +89,26 @@ function Add-BlueCatSRV {
             throw "Aborting SRV record creation: No host record found for target $($NewTarget)"
         }
 
-        if ($SRVInfo.shortName) {
-            $SRVName = $SRVInfo.name
-        } else {
-            $SRVName = '.'+$SRVInfo.name
+        $CreateSRVRecord = @{
+            Method         = 'Post'
+            BlueCatSession = $BlueCatSession
         }
+        if ($SRVInfo.shortName) {
+            $Body = @{
+                type       = 'SRVRecord'
+                name       = $SRVInfo.shortName
+                properties = "ttl=$($TTL)|absoluteName=$($SRVInfo.name)|linkedRecordName=$($NewTarget)|port=$($Port)|priority=$($Priority)|weight=$($Weight)|"
+            }
+            $CreateSRVRecord.Body = $Body | ConvertTo-Json
+            $Uri = "addEntity?parentId=$($SRVInfo.zone.id)"
+        } else {
+            $SRVName   = '.'+$SRVInfo.name
+            $Uri       = "addSRVRecord?viewId=$($SRVInfo.view.id)&absoluteName=$($SRVName)&linkedRecordName=$($NewTarget)"
+            $Uri      += "&port=$($Port)&priority=$($Priority)&weight=$($Weight)&ttl=$($TTL)"
+        }
+        $CreateSRVRecord.Request = $Uri
 
-        $Uri =  "addSRVRecord?viewId=$($SRVInfo.view.id)&absoluteName=$($SRVName)&linkedRecordName=$($targetName)"
-        $Uri += "&port=$($Port)&priority=$($Priority)&weight=$($Weight)&ttl=$($TTL)"
-        $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Uri
+        $BlueCatReply = Invoke-BlueCatApi @CreateSRVRecord
         if (-not $BlueCatReply) {
             throw "SRV creation failed for $($FQDN) - $($BlueCatReply)"
         }
