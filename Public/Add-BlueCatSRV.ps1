@@ -3,31 +3,33 @@ function Add-BlueCatSRV
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [Alias('FQDN')]
         [string] $Name,
 
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
+        [Alias('Value')]
         [string] $Target,
 
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [ValidateRange(1, [int]::MaxValue)]
         [int] $Port,
 
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [ValidateRange(1, [int]::MaxValue)]
         [int] $Priority,
 
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [ValidateRange(1, [int]::MaxValue)]
         [int] $Weight,
 
+        [Parameter()]
         [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
-        [int]$ViewID,
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -76,17 +78,19 @@ function Add-BlueCatSRV
         }
 
         $LookupTarget      = $LookupParms
-        $NewTarget         = $Target.TrimEnd('\.')
+        $NewTarget         = $Target | Test-ValidFQDN
         $LookupTarget.Name = $NewTarget
 
         $targetInfo        = Resolve-BlueCatFQDN @LookupTarget
         if ($targetInfo.host) {
             $targetName = $targetInfo.host.name
+            Write-Verbose "$($thisFN): Found host record for target '$($targetName)' (ID:$($targetInfo.host.id))"
             if ($targetName.external) {
                 Write-Warning "$($thisFN): Both internal and external host entries found for $($targetName.host)"
             }
         } elseif ($targetInfo.external) {
             $targetName = $targetInfo.external.name
+            Write-Verbose "$($thisFN): Found EXTERNAL host record for target '$($targetName)' (ID:$($targetInfo.external.id))"
         } else {
             throw "Aborting SRV record creation: No host record found for target $($NewTarget)"
         }
@@ -108,7 +112,7 @@ function Add-BlueCatSRV
             throw "SRV record creation failed for $($FQDN)"
         }
 
-        Write-Verbose "$($thisFN): Created SRV #$($BlueCatReply) for '$($SRVInfo.name)' (points to $($targetName) priority $($Priority))"
+        Write-Verbose "$($thisFN): Created ID:$($BlueCatReply) for '$($SRVInfo.name)' (points to $($targetName):$($Port) priority:$($Priority) weight:$($Weight))"
 
         if ($PassThru) {
             Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession

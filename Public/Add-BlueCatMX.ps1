@@ -3,21 +3,25 @@ function Add-BlueCatMX
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [Alias('FQDN')]
         [string] $Name,
 
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [Alias('Target','Value')]
+        [string] $Relay,
+
+        [Parameter(Mandatory)]
         [ValidateRange(0, [int]::MaxValue)]
         [int] $Priority,
 
-        [parameter(Mandatory)]
-        [string] $Relay,
-
+        [Parameter()]
         [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
-        [int]$ViewID,
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -68,6 +72,7 @@ function Add-BlueCatMX
         $LookupRelay      = $LookupParms
         $NewRelay         = $Relay | Test-ValidFQDN
         $LookupRelay.Name = $NewRelay
+
         $relayInfo        = Resolve-BlueCatFQDN @LookupRelay
         if ($relayInfo.host) {
             $relayName = $relayInfo.host.name
@@ -96,10 +101,10 @@ function Add-BlueCatMX
 
         $BlueCatReply = Invoke-BlueCatApi @CreateMXRecord
         if (-not $BlueCatReply) {
-            throw "MX creation failed for $($FQDN)"
+            throw "MX record creation failed for $($FQDN)"
         }
 
-        Write-Verbose "$($thisFN): Created MX #$($BlueCatReply) for '$($MXInfo.name)' (points to $($relayName) priority $($Priority))"
+        Write-Verbose "$($thisFN): Created ID:$($BlueCatReply) for '$($MXInfo.name)' (points to $($relayName) priority:$($Priority))"
 
         if ($PassThru) {
             Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession

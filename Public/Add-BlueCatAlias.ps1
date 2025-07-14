@@ -4,17 +4,20 @@
 
     param(
         [Parameter(Mandatory)]
-        [Alias('Alias')]
+        [ValidateNotNullOrEmpty()]
+        [Alias('FQDN')]
         [string] $Name,
 
-        [parameter(Mandatory)]
-        [Alias('Value')]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [Alias('Target','Value')]
         [string] $LinkedHost,
 
+        [Parameter()]
         [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
-        [int]$ViewID,
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -32,9 +35,9 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $Name = $Name | Test-ValidFQDN
+        $FQDN = $Name | Test-ValidFQDN
         $LookupParms = @{
-            FQDN           = $Name
+            FQDN           = $FQDN
             BlueCatSession = $BlueCatSession
         }
         if ($ViewID) {
@@ -47,7 +50,7 @@
         $AliasInfo = Resolve-BlueCatFQDN @LookupParms
         if (-not $AliasInfo.zone) {
             # No deployable zone was found for Alias/CName
-            throw "No deployable zone was found for $($Name)"
+            throw "No deployable zone was found for $($FQDN)"
         }
         Write-Verbose "$($thisFN): Selected Zone #$($AliasInfo.zone.id) as '$($AliasInfo.zone.name)'"
 
@@ -65,14 +68,24 @@
             Write-Warning "$($thisFN): An external host entry exists for '$($AliasInfo.external.name)'"
         }
 
-        $LookupParms.FQDN = $LinkedHost | Test-ValidFQDN
-        $LinkedInfo = Resolve-BlueCatFQDN @LookupParms
+        $LookupLinked      = $LookupParms
+        $NewLinked         = $LinkedHost | Test-ValidFQDN
+        $LookupLinked.Name = $NewLinked
+
+        $LinkedInfo        = Resolve-BlueCatFQDN @$LookupLinked
         $propString = "ttl=$($TTL)|absoluteName=$($AliasInfo.name)|linkedRecordName=$($LinkedInfo.name)|"
         if ($LinkedInfo.host) {
+            $linkedName = $LinkedInfo.host.name
+            Write-Verbose "$($thisFN): Found host record for linked host '$($linkedName)' (ID:$($LinkedInfo.host.id))"
+            if ($LinkedInfo.external) {
+                Write-Warning "$($thisFN): Both internal and external host entries found for $($linkedName)"
+            }
             $propString += "linkedParentZoneName=$($LinkedInfo.zone.name)|"
-        } elseif (-not $LinkedInfo.external) {
-            # Nothing to link to...
-            throw "$(LinkedHost) is not in the database. A host or external host entry must be created first!"
+        } elseif ($LinkedInfo.external) {
+            $linkedName = $LinkedInfo.external.name
+            Write-Verbose "$($thisFN): Found EXTERNAL host record for linked host '$($linkedName)' (ID:$($LinkedInfo.external.id))"
+        } else {
+            throw "Aborting CNAME record creation: No host record found for linked host $($NewLinked)"
         }
 
         $Body = @{
@@ -87,12 +100,12 @@
             BlueCatSession = $BlueCatSession
         }
 
-        $result = Invoke-BlueCatApi @CreateAliasRecord
-        if (-not $result) {
-            throw "Alias creation failed for $($Name)"
+        $BlueCatReply = Invoke-BlueCatApi @CreateAliasRecord
+        if (-not $BlueCatReply) {
+            throw "CNAME record creation failed for $($FQDN)"
         }
 
-        Write-Verbose "$($thisFN): Created #$($result) as '$($AliasInfo.name)' (points to '$($LinkedInfo.name)')"
+        Write-Verbose "$($thisFN): Created ID:$($BlueCatReply) as '$($AliasInfo.name)' (points to '$($linkedName)')"
 
         if ($PassThru) {
             Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
