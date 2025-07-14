@@ -1,5 +1,5 @@
 ﻿function Set-BlueCatConnection {
-    [cmdletbinding()]
+    [CmdletBinding()]
 
     param(
         [parameter(ValueFromPipeline,Mandatory,Position=0)]

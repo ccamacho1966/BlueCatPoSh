@@ -1,18 +1,19 @@
 ﻿function Convert-BlueCatPropertyString {
     [cmdletbinding()]
     param(
-        [parameter(Mandatory,ValueFromPipeline,Position=0)]
-        [string] $PropertyString
+        [Parameter(Mandatory,ValueFromPipeline,Position=0)]
+        [Alias('Properties','PropertyString')]
+        [string] $Property
     )
 
     process {
-        $newObj = New-Object -TypeName psobject
-        $prop = $PropertyString.TrimEnd('|').Split('|')
-        foreach ($item in $prop) {
-            $bits = $item.Split('=',2)
-            $newObj | Add-Member -MemberType NoteProperty -Name $bits[0] -Value $bits[1]
+        $PropertyObject = New-Object -TypeName psobject
+        $Properties     = $Property.TrimEnd('|').Split('|')
+        foreach ($PropertyItem in $Properties) {
+            $bits = $PropertyItem.Split('=',2)
+            $PropertyObject | Add-Member -MemberType NoteProperty -Name $bits[0] -Value $bits[1]
         }
 
-        $newObj
+        $PropertyObject
     }
 }

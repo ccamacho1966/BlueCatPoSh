@@ -1,17 +1,19 @@
 ﻿function Get-BlueCatIP4Block {
-    [cmdletbinding(DefaultParameterSetName='CIDR')]
+    [CmdletBinding(DefaultParameterSetName='CIDR')]
 
     param(
+        [Parameter()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $Parent,
 
-        [parameter(Mandatory,ParameterSetName='CIDR')]
+        [Parameter(Mandatory,ParameterSetName='CIDR')]
         [string] $CIDR,
 
-        [parameter(Mandatory,ParameterSetName='Range')]
-        [string] $Start,
+        [Parameter(Mandatory,ParameterSetName='Range')]
+        [string] $StartIP,
 
-        [parameter(Mandatory,ParameterSetName='Range')]
-        [string] $End,
+        [Parameter(Mandatory,ParameterSetName='Range')]
+        [string] $EndIP,
 
         [Parameter()]
         [Alias('Connection','Session')]
@@ -35,8 +37,8 @@
             $Query="getEntityByCIDR?parentId=$($Parent)&cidr=$($CIDR)&type=IP4Block"
             Write-Verbose "$($thisFN): CIDR $($CIDR) from entity #$($Parent)"
         } else {
-            $Query="getEntityByRange?parentId=$($Parent)&address1=$($Start)&address2=$($End)&type=IP4Block"
-            Write-Verbose "$($thisFN): Range $($Start)-$($End) from entity #$($Parent)"
+            $Query="getEntityByRange?parentId=$($Parent)&address1=$($StartIP)&address2=$($EndIP)&type=IP4Block"
+            Write-Verbose "$($thisFN): Range $($StartIP)-$($EndIP) from entity #$($Parent)"
         }
 
         # Attempt to retrieve the IP4 Block

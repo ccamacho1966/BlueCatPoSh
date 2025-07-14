@@ -1,12 +1,16 @@
 ﻿function Connect-BlueCat {
-    [cmdletbinding()]
+    [CmdletBinding()]
 
     param(
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string] $Server,
 
-        [parameter(ValueFromPipeline,Mandatory)]
-        [pscredential] $Credential,
+        [Parameter(ValueFromPipeline,Mandatory)]
+        [ValidateNotNull()]
+        [System.Management.Automation.PSCredential]
+        [System.Management.Automation.Credential()]
+        $Credential = [System.Management.Automation.PSCredential]::Empty,
 
         [switch] $PassThru
     )
@@ -15,6 +19,10 @@
 
     process {
         $thisFN = (Get-PSCallStack)[0].Command
+
+        if ($Credential -eq [System.Management.Automation.PSCredential]::Empty) {
+            $Credential = Get-Credential -UserName $env:USERNAME -Message "Credentials for BlueCat Appliance ($($Server))"
+        }
 
         try {
             $NewSession = [BlueCat]::new($Server, $Credential)

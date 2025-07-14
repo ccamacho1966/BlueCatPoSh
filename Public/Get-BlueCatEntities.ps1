@@ -1,5 +1,5 @@
 function Get-BlueCatEntities {
-    [cmdletbinding()]
+    [CmdletBinding()]
 
     param(
         [Parameter(Mandatory)]
@@ -9,8 +9,12 @@ function Get-BlueCatEntities {
         [Parameter(Mandatory)]
         [string] $EntityType,
 
+        [Parameter()]
+        [ValidateRange(0, [int]::MaxValue)]
         [int] $Start = 0,
 
+        [Parameter()]
+        [ValidateRange(1, 100)]
         [int] $Count = 10,
 
         [Parameter()]

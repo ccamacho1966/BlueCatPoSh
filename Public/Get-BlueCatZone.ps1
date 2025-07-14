@@ -1,5 +1,5 @@
 ﻿function Get-BlueCatZone {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
         [parameter(Mandatory)]
@@ -7,6 +7,7 @@
         [string] $Name,
 
         [Parameter(ParameterSetName='ViewID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
@@ -23,7 +24,7 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $Zone = $Name.TrimEnd('\.')
+        $Zone = $Name | Test-ValidFQDN
 
         if ($View)   {
             $ViewID = $View.ID

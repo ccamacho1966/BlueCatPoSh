@@ -3,19 +3,22 @@ function Add-BlueCatExternalHost
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [Alias('ExternalHost')]
         [string] $Name,
 
         [Parameter(ParameterSetName='ViewID')]
-        [int]$ViewID,
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
         [PSCustomObject] $View,
 
-        [PSCustomObject] $Properties,
+        [Parameter()]
+        [Alias('Properties')]
+        [PSCustomObject] $Property,
 
+        [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession,
 

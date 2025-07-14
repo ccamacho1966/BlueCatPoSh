@@ -1,5 +1,5 @@
 ﻿function Get-BlueCatConnection {
-    [cmdletbinding(DefaultParameterSetName='Default')]
+    [CmdletBinding(DefaultParameterSetName='Default')]
 
     param(
         [Parameter(ParameterSetName='Default')]

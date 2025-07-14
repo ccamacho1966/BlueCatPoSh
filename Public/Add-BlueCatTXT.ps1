@@ -3,18 +3,20 @@
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [Alias('HostName','FQDN')]
         [string] $Name,
 
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string] $Text,
 
+        [Parameter()]
         [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
-        [int]$ViewID,
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -24,7 +26,7 @@
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession,
 
-        [switch]$PassThru
+        [switch] $PassThru
     )
 
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }

@@ -1,11 +1,13 @@
 ﻿function Set-BlueCatConfig {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
         [Parameter(Mandatory,Position=0,ParameterSetName='ByName')]
         [Alias('ConfigName')]
         [string] $Name,
 
         [Parameter(Mandatory,Position=0,ParameterSetName='ByID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [Alias('ConfigID')]
         [int] $ID,
 
@@ -42,7 +44,7 @@
         Write-Verbose "$($thisFN): Selected Conf #$($BlueCatReply.id) as '$($BlueCatReply.name)'"
 
         if ($PassThru) {
-            $BlueCatSession | Get-BlueCatConfig
+            $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
         }
     }
 }

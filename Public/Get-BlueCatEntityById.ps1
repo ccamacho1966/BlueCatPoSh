@@ -1,8 +1,10 @@
 ﻿function Get-BlueCatEntityById {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
         [parameter(Mandatory)]
         [Alias('EntityID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $ID,
 
         [Parameter()]

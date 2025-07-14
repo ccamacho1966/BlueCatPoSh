@@ -1,5 +1,5 @@
 ﻿function Get-BlueCatView {
-    [cmdletbinding(DefaultParameterSetName='ViewNameConfigID')]
+    [CmdletBinding(DefaultParameterSetName='ViewNameConfigID')]
 
     param(
         [Parameter(Position=0,ParameterSetName='ViewNameConfigID')]
@@ -15,9 +15,11 @@
 
         [Parameter(ParameterSetName='AllConfigID')]
         [Parameter(ParameterSetName='ViewNameConfigID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $ConfigID,
 
         [Parameter(Position=0,ParameterSetName='ViewID',Mandatory)]
+        [ValidateRange(1, [int]::MaxValue)]
         [Alias('ID')]
         [int] $ViewID,
 

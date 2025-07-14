@@ -1,5 +1,5 @@
 ﻿function Get-BlueCatConfig {
-    [cmdletbinding(DefaultParameterSetName='byID')]
+    [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(
         [Parameter(ParameterSetName='byName',Mandatory)]
@@ -9,6 +9,7 @@
 
         [Parameter(ParameterSetName='byID')]
         [Alias('ID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $ConfigID,
 
         [Parameter(ParameterSetName='All')]

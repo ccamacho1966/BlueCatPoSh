@@ -1,11 +1,13 @@
 ﻿function Set-BlueCatView {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
         [Parameter(Mandatory,Position=0,ParameterSetName='ByName')]
         [Alias('ViewName')]
         [string] $Name,
 
         [Parameter(Mandatory,Position=0,ParameterSetName='ByID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [Alias('ViewID')]
         [int] $ID,
 
@@ -19,16 +21,18 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        if ($Name -and !$BlueCatSession.idConfig) { throw "Must set config first to set view by Name" }
+        if ($Name -and !$BlueCatSession.idConfig) {
+            throw "Must set config first to set view by Name"
+        }
 
         if ($PSCmdlet.ParameterSetName -eq 'ByID') {
             $Query = "getEntityById?id=$($id)"
-            $result = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
-            if (-not $result.id) {
-                throw "$($result) View #$($ID) not found!"
+            $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+            if (-not $BlueCatReply.id) {
+                throw "$($BlueCatReply) View #$($ID) not found!"
             }
-            if ($result.type -ne 'View') {
-                throw "$($result) Entity #$($ID) ($($result.name)) is not a View!"
+            if ($BlueCatReply.type -ne 'View') {
+                throw "$($BlueCatReply) Entity #$($ID) ($($BlueCatReply.name)) is not a View!"
             }
 
             $Query = "getParent?entityId=$($ID)"
@@ -40,18 +44,18 @@
             }
         } else {
             $Query = "getEntityByName?parentId=$($BlueCatSession.idConfig)&type=View&name=$($Name)"
-            $result = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
-            if (-not $result.id) {
-                throw "$($result) View $($name) not found!"
+            $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+            if (-not $BlueCatReply.id) {
+                throw "$($BlueCatReply) View $($name) not found!"
             }
         }
 
-        $BlueCatSession.idView = $result.id
-        $BlueCatSession.View = $result.name
+        $BlueCatSession.idView = $BlueCatReply.id
+        $BlueCatSession.View = $BlueCatReply.name
         Write-Verbose "Set-BlueCatView: Selected View #$($BlueCatSession.idView) as '$($BlueCatSession.View)'"
 
         if ($PassThru) {
-            $BlueCatSession | Get-BlueCatView
+            $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
         }
     }
 }

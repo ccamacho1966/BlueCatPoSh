@@ -1,11 +1,13 @@
 ﻿function Trace-BlueCatConfigFor {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
         [Parameter(ValueFromPipeline)]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession,
 
         [Parameter(Position=0,Mandatory)]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $ID
     )
 
@@ -17,7 +19,7 @@
             $Query = "getParent?entityId=$($traceId)"
             $parent = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
             if (-not $parent.id) {
-                Throw "Entity Id $($traceId) not found!"
+                throw "Entity Id $($traceId) not found!"
             }
             if ($parent.type -ne 'Configuration') {
                 $traceId = $parent.id

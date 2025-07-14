@@ -1,11 +1,12 @@
 ﻿function Clear-BlueCatConfig {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
         [Parameter(ValueFromPipeline)]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession,
 
-        [switch]$Force
+        [switch] $Force
     )
 
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
@@ -22,6 +23,8 @@
         $BlueCatSession.idConfig = 0
         $BlueCatSession.Config = $null
 
-        if ($BlueCatSession.idView) { $BlueCatSession | Clear-BlueCatView }
+        if ($BlueCatSession.idView) {
+            $BlueCatSession | Clear-BlueCatView
+        }
     }
 }

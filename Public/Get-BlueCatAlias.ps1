@@ -1,13 +1,13 @@
 ﻿function Get-BlueCatAlias { # also known as CNAME
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [Alias('CNAME','Alias')]
         [string] $Name,
 
         [Parameter(ParameterSetName='ViewID')]
-        [int]$ViewID,
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -41,7 +41,7 @@
         }
 
         # Trim any trailing dots from the name for consistency/display purposes
-        $FQDN = $Name.TrimEnd('\.')
+        $FQDN = $Name | Test-ValidFQDN
 
         # Standardize lookups and retrieved information
         $Resolved = Resolve-BlueCatFQDN -FQDN $FQDN -ViewID $ViewID -BlueCatSession $BlueCatSession

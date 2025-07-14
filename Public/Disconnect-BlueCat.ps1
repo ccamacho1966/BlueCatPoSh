@@ -1,8 +1,8 @@
 function Disconnect-BlueCat {
-    [cmdletbinding()]
+    [CmdletBinding()]
 
     param(
-        [parameter(ValueFromPipeline)]
+        [Parameter(ValueFromPipeline)]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession
     )

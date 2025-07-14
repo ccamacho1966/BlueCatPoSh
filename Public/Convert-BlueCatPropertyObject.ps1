@@ -1,13 +1,15 @@
 ﻿function Convert-BlueCatPropertyObject {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
-        [parameter(Mandatory,ValueFromPipeline,Position=0)]
-        [psobject] $PropertyObject
+        [Parameter(Mandatory,ValueFromPipeline,Position=0)]
+        [Alias('Properties','PropertyObject')]
+        [PSCustomObject] $Property
     )
 
     process {
         $PropertyString=''
-        foreach ($item in $PropertyObject.PSObject.Properties) {
+        foreach ($item in $Property.PSObject.Properties) {
             if ($item.Name -notmatch '^ip4[bn].*') {
                 $PropertyString += "$($item.Name)=$($item.Value)|"
             }

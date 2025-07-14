@@ -1,17 +1,21 @@
 ﻿function Invoke-BlueCatApi {
-    [cmdletbinding()]
-    param(
-        [Parameter()]
-        [Alias('Connection','Session')]
-        [BlueCat] $BlueCatSession = $Script:BlueCatSession,
+    [CmdletBinding()]
 
+    param(
         [ValidateSet('Get','Post','Put')]
         [string] $Method = 'Get',
 
         [Parameter(Mandatory, ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
         [string] $Request,
 
-        [string] $Body
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $Body,
+
+        [Parameter()]
+        [Alias('Connection','Session')]
+        [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
 
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 

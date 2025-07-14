@@ -1,12 +1,14 @@
 ﻿function Get-BlueCatHost {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
         [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [Alias('HostName')]
         [string] $Name,
 
         [Parameter(ParameterSetName='ViewID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
@@ -41,7 +43,7 @@
         }
 
         # Trim any trailing dots from the name for consistency/display purposes
-        $FQDN = $Name.TrimEnd('\.')
+        $FQDN = $Name | Test-ValidFQDN
 
         # Standardize lookups and retrieved information
         $Resolved = Resolve-BlueCatFQDN -FQDN $FQDN -ViewID $ViewID -BlueCatSession $BlueCatSession

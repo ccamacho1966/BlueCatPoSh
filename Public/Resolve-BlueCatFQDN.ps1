@@ -8,7 +8,8 @@ function Resolve-BlueCatFQDN {
         [string] $FQDN,
 
         [Parameter(ParameterSetName='ViewID')]
-        [int]$ViewID,
+        [ValidateRange(1, [int]::MaxValue)]
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -27,7 +28,7 @@ function Resolve-BlueCatFQDN {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $FQDN = $FQDN.TrimEnd('\.')
+        $FQDN = $FQDN | Test-ValidFQDN
         Write-Verbose "$($thisFN): Searching database for '$($FQDN)'"
 
         if ($View) {

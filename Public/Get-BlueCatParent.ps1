@@ -3,6 +3,7 @@
 
     param(
         [Parameter(ParameterSetName='byID',Mandatory)]
+        [ValidateRange(1, [int]::MaxValue)]
         [Alias('EntityID')]
         [int] $ID,
 

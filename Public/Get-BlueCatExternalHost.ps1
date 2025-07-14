@@ -1,5 +1,5 @@
 function Get-BlueCatExternalHost {
-    [cmdletbinding(DefaultParameterSetName='ViewID')]
+    [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
@@ -7,6 +7,7 @@ function Get-BlueCatExternalHost {
         [string] $Name,
 
         [Parameter(ParameterSetName='ViewID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
@@ -40,20 +41,20 @@ function Get-BlueCatExternalHost {
             $ViewID = $BlueCatSession.idView
         }
 
-        $xHost = $Name.TrimEnd('\.')
+        $xHost = $Name | Test-ValidFQDN
 
         $Query = "getEntityByName?parentId=$($ViewID)&name=$($xHost)&type=ExternalHostRecord"
-        $result = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
-        if (-not $result.id) {
+        if (-not $BlueCatReply.id) {
             # Record not found. Return nothing/null.
-            Write-Verbose "$($thisFN): External Host Record for '$($xHost)' not found: $($result)"
+            Write-Verbose "$($thisFN): External Host Record for '$($xHost)' not found: $($BlueCatReply)"
         } else {
             # Found the external host - return the result
-            Write-Verbose "$($thisFN): Selected #$($result.id) as '$($result.name)'"
+            Write-Verbose "$($thisFN): Selected #$($BlueCatReply.id) as '$($BlueCatReply.name)'"
 
             # Build the full object and return
-            $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+            $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
         }
     }
 }

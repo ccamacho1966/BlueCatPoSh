@@ -7,6 +7,7 @@ Function Get-BlueCatSRV {
         [string] $Name,
 
         [Parameter(ParameterSetName='ViewID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
@@ -41,7 +42,7 @@ Function Get-BlueCatSRV {
         }
 
         # Trim any trailing dots from the name for consistency/display purposes
-        $FQDN = $Name.TrimEnd('\.')
+        $FQDN = $Name | Test-ValidFQDN
 
         # Standardize lookups and retrieved information
         $Resolved = Resolve-BlueCatFQDN -FQDN $FQDN -ViewID $ViewID -BlueCatSession $BlueCatSession
@@ -82,7 +83,7 @@ Function Get-BlueCatSRV {
             $SRVobj | Add-Member -MemberType NoteProperty -Name config    -Value $Resolved.config
             $SRVobj | Add-Member -MemberType NoteProperty -Name view      -Value $Resolved.view
 
-            # Return the MX object to caller
+            # Return the SRV object to caller
             $SRVobj
         }
     }

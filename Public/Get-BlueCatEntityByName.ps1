@@ -1,14 +1,18 @@
 ﻿function Get-BlueCatEntityByName {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
         [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [Alias('EntityName')]
         [string] $Name,
 
         [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string] $EntityType,
 
         [Parameter()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $ParentID,
 
         [Parameter()]
@@ -38,7 +42,7 @@
         $Query = "getEntityByName?parentId=$($ParentID)&name=$($Name)&type=$($EntityType)"
         $result = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
         if (-not $result.id) {
-            Throw "$($EntityType) $($Name) not found: $($result)"
+            throw "$($EntityType) $($Name) not found: $($result)"
         }
         Write-Verbose "$($thisFN): Selected $($result.type) #$($result.id) as $($result.name)"
 

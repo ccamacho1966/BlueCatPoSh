@@ -3,16 +3,19 @@
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [Alias('Zone')]
         [string] $Name,
 
         [switch] $NotDeployable,
 
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [PSCustomObject] $Properties,
 
         [Parameter(ParameterSetName='ViewID')]
-        [int]$ViewID,
+        [ValidateNotNullOrEmpty()]
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]

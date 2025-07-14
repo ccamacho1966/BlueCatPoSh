@@ -1,5 +1,6 @@
 ﻿function Convert-BlueCatReply {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
         [Parameter(ValueFromPipeline,Mandatory)]
         [PSCustomObject] $RawObject,

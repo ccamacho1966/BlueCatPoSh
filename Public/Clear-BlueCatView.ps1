@@ -1,5 +1,6 @@
 ﻿function Clear-BlueCatView {
-    [cmdletbinding()]
+    [CmdletBinding()]
+
     param(
         [Parameter(ValueFromPipeline)]
         [Alias('Connection','Session')]
