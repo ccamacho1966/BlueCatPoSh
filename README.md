@@ -1,10 +1,14 @@
-# BlueCatPoSh
+# BlueCatPoSh - Our BlueCat IPAM PowerShell Library
 
-BlueCat IPAM PowerShell Library
+Leveraging the BlueCat IPAM API has generally been complex in our environment so we have been experimenting with libraries to standardize and simplify this access for us. BlueCatPoSh is the 3rd generation of my local library implementation for PowerShell and I'm working to clean it up and make it useful to a larger audience.
+
+BlueCatPoSh attempts to move beyond a simple one-for-one implementation of the IPAM API and incorporate sanity and prerequisite testing at the most basic level. There are a few more robust functions to simplify or expand the data collection/update process as well.
+
+This library is still very much an imperfect work in progress, but I am still actively working on it.
 
 ## Supported Environments
 
-BlueCatPoSh has been tested on PowerShell v5.1 on Windows.
+BlueCatPoSh has been tested with PowerShell v5.1 on Windows.
 
 The library is known to work with BlueCat v9.4 and v9.6 at this time.
 
@@ -82,4 +86,4 @@ Get-BlueCatView -All -EveryConfig
 
 ## Support
 
-I have a small team that assists me with support of our tools and libraries. Please feel free to log issues/bugs and feature requests. Code contributions are welcome as well. We'll respond as quickly as time permits.
+I have a small team that assists me with the support of our tools and libraries. Please feel free to log issues/bugs and feature requests. Code contributions are welcome as well. We'll respond as quickly as time permits.
