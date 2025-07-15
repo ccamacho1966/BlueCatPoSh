@@ -29,6 +29,7 @@
     PS> Set-BlueCatView -ID 23456 -BlueCatSession $MyOtherBlueCatSession
 
     Updates the default view for $MyOtherBlueCatSession to entity ID 23456.
+    When a default view is set by ID, the default configuration is also updated.
     If entity ID 23456 is not a view, an error will be thrown by the cmdlet.
 .EXAMPLE
     PS> $UpdatedView = $AnotherSession | Set-BlueCatView -Name 'Partners' -PassThru
