@@ -3,7 +3,7 @@
 .SYNOPSIS
     Connect to a BlueCat IPAM appliance using the API in order to use commands from the BlueCatPoSh module.
 .DESCRIPTION
-    The Connect-BlueCat cmdlets connects an API authorized account to the BlueCat IPAM API. Your account must
+    The Connect-BlueCat cmdlet connects an API authorized account to the BlueCat IPAM API. Your account must
     be authorized to use the API to connect with the BlueCatPoSh module. Multiple simultaneous connections are
     supported with a default connection being saved to the script level variable $BlueCatSession. Each active
     connection can optionally be configured with a default configuration (Set-BlueCatConfiguration) and default
@@ -44,7 +44,7 @@
         [ValidateNotNullOrEmpty()]
         [string] $Server,
 
-        [Parameter(ValueFromPipeline,Mandatory)]
+        [Parameter(ValueFromPipeline)]
         [ValidateNotNull()]
         [System.Management.Automation.PSCredential]
         [System.Management.Automation.Credential()]
