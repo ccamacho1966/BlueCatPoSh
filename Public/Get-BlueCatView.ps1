@@ -1,4 +1,50 @@
 ﻿function Get-BlueCatView {
+<#
+.SYNOPSIS
+    Retrieve one or more BlueCat View objects.
+.DESCRIPTION
+    The Get-BlueCatView cmdlet allows the retrieval of BlueCat View objects.
+
+    A specific view can be retrieved directly by entity ID or by combining a view name with a configuration reference.
+
+    Using the -All switch allows the retrieval of all views linked to a specific configuration. When -All is combined with -EveryConfig the cmdlet will retrieve a complete list of all views in all configurations on the IPAM appliance.
+.PARAMETER Name
+    A string value representing the name of the desired view.
+
+    Looking up a view by name requires a valid configuration reference. This can be provided as an object (-Config), an entity ID (-ConfigID), or by the BlueCatSession default configuration.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER Config
+    A PSCustomObject representing the desired configuration.
+.PARAMETER ConfigID
+    An integer value representing the entity ID of the desired configuration.
+.PARAMETER All
+    A switch that indicates the cmdlet should return all views in a specific configuration.
+.PARAMETER EveryConfig
+    A switch that when combined with -All indicates that all views in all configurations should be returned.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this entity lookup.
+.EXAMPLE
+    PS> Get-BlueCatView
+
+    Returns a PSCustomObject representing the default view for the default BlueCat session, or NULL if one is not set.
+.EXAMPLE
+    PS> Get-BlueCatView -Name 'Partners' -ConfigID 12345 -BlueCatSession $Session8
+
+    Returns a PSCustomObject representing the 'Partners' view under configuration #12345 on BlueCat session $Session8. Returns NULL if the view is not found.
+.EXAMPLE
+    PS> Get-BlueCatView -Config $MyConfigObj -All -BlueCatSession $Session3
+
+    Returns a list of PSCustomObjects representing all views under the configuration object $MyConfigObj on BlueCat session $Session3. Returns NULL if the configuration has no views configured.
+.EXAMPLE
+    PS> Get-BlueCatView -All -EveryConfig
+
+    Returns a list of PSCustomObjects representing all views under all configurations on the default BlueCat session. Returns NULL if there are no views in any configuration.
+.INPUTS
+    BlueCat object representing the session to be used for this entity lookup.
+.OUTPUTS
+    One or more PSCustomObjects representing BlueCat views.
+#>
     [CmdletBinding(DefaultParameterSetName='ViewNameConfigID')]
 
     param(
@@ -7,6 +53,11 @@
         [ValidateNotNullOrEmpty()]
         [Alias('ViewName')]
         [string] $Name,
+
+        [Parameter(Position=0,ParameterSetName='ViewID',Mandatory)]
+        [ValidateRange(1, [int]::MaxValue)]
+        [Alias('ID')]
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='AllConfigObj',Mandatory)]
         [Parameter(ParameterSetName='ViewNameConfigObj',Mandatory)]
@@ -17,11 +68,6 @@
         [Parameter(ParameterSetName='ViewNameConfigID')]
         [ValidateRange(1, [int]::MaxValue)]
         [int] $ConfigID,
-
-        [Parameter(Position=0,ParameterSetName='ViewID',Mandatory)]
-        [ValidateRange(1, [int]::MaxValue)]
-        [Alias('ID')]
-        [int] $ViewID,
 
         [Parameter(ParameterSetName='AllConfigObj',Mandatory)]
         [Parameter(ParameterSetName='AllConfigID',Mandatory)]
@@ -64,13 +110,18 @@
             }
 
             # loop through selected config objects and pull all views from each
+            [PSCustomObject[]] $ViewList = @()
             foreach ($cfg in $ConfigList) {
                 Write-Verbose "$($thisFN): ALL Views in Configuration '$($cfg.name)' (ID:$($cfg.id))"
                 $Url = "getEntities?parentId=$($cfg.id)&start=0&count=100&type=View"
                 $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Url -BlueCatSession $BlueCatSession
 
                 # Stack an array of all BlueCat Views in this Configuration
-                $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+                $ViewList += $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+            }
+            if ($ViewList.Count) {
+                # Return the array of views, if any have been found.
+                $ViewList
             }
         } else {
             if ($Name) {

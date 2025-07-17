@@ -1,4 +1,38 @@
 ﻿function Get-BlueCatConfig {
+<#
+.SYNOPSIS
+    Retrieve one or more BlueCat Configuration objects.
+.DESCRIPTION
+    The Get-BlueCatConfig cmdlet allows the retrieval of BlueCat Configuration objects.
+
+    A specific configuration can be retrieved by entity ID or configuration name.
+
+    Using the -All switch allows the retrieval of all configurations defined on an IPAM appliance.
+.PARAMETER Name
+    A string value representing the name of the desired configuration.
+.PARAMETER ConfigID
+    An integer value representing the entity ID of the desired configuration.
+.PARAMETER All
+    A switch that indicates the cmdlet should return all configurations on an IPAM appliance.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this entity lookup.
+.EXAMPLE
+    PS> Get-BlueCatConfig
+
+    Returns a PSCustomObject representing the default configuration for the default BlueCat session, or NULL if one is not set.
+.EXAMPLE
+    PS> Get-BlueCatConfig -Name 'Public' -BlueCatSession $Session4
+
+    Returns a PSCustomObject representing the 'Public' configuration on BlueCat session $Session4. Returns NULL if the configuration is not found.
+.EXAMPLE
+    PS> Get-BlueCatConfig -All
+
+    Returns a list of PSCustomObjects representing all configurations on the default BlueCat session. Returns NULL if there are no configurations configured.
+.INPUTS
+    BlueCat object representing the session to be used for this entity lookup.
+.OUTPUTS
+    One or more PSCustomObjects representing BlueCat configurations.
+#>
     [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(
@@ -29,7 +63,7 @@
             $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Url -BlueCatSession $BlueCatSession
 
             # Return an array of all BlueCat Configurations on this appliance
-            $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+            [PSCustomObject[]] ($BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession)
         } else {
             if ($Name) {
                 # Attempt to lookup by name
