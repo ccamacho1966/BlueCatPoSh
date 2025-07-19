@@ -1,4 +1,45 @@
 ﻿function Add-BlueCatIP4Block {
+<#
+.SYNOPSIS
+    Create a new IP4 Block definition.
+.DESCRIPTION
+    The Add-BlueCatIP4Block cmdlet will create a new IP4 Block definition.
+
+    IP4 Blocks can be created directly under configurations or other larger IP4 Blocks. They can contain smaller IP4 Blocks or IP4 Networks. They are a required building block in the BlueCat IPAM system as IP4 Networks cannot be defined directly under a Configuration.
+.PARAMETER Name
+    (Optional) A string value representing the name for the new IP4 Block
+.PARAMETER CIDR
+    A string value representing an IP4 block using CIDR notation.
+.PARAMETER StartIP
+    A string value representing the first IP address in the IP4 block (Range Definition).
+.PARAMETER EndIP
+    A string value representing the last IP address in the IP4 block (Range Definition).
+.PARAMETER ParentID
+    An integer value representing the entity ID of the desired parent configuration or IP4 block.
+
+    If a Parent is not specified, the cmdlet will attempt to use the default session configuration. If no default configuration has been set, the cmdlet will throw an error.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object creation.
+.PARAMETER PassThru
+    A switch that causes a PSCustomObject representing the new IP4 Block to be returned.
+.EXAMPLE
+    PS> Add-BlueCatIP4Block -CIDR '10.90.0.0/16'
+
+    Create an unnamed IP4 Block for CIDR 10.90.0.0/16 using the default BlueCat session and default Configuration.
+.EXAMPLE
+    PS> Add-BlueCatIP4Block -Start 10.10.8.0 -End 10.10.13.255 -Name 'Database Networks' -Parent 1414 -BlueCatSession $Session4 -PassThru
+
+    Create a ranged IP4 Block 10.10.8.0-10.10.13.255 named 'Database Networks'.
+    Place the new IP4 Block under the IP4 Block with entity ID #1414.
+    Use the BlueCat session associated with the BlueCat object $Session4.
+    Return a PSCustomObject representing the new IP4 Block.
+.INPUTS
+    None
+.OUTPUTS
+    None, by default.
+
+    If the '-PassThru' switch is used, a PSCustomObject representing the new IP4 Block will be returned.
+#>
     [CmdletBinding()]
 
     param(
@@ -12,16 +53,21 @@
 
         [Parameter(Mandatory,ParameterSetName='Range')]
         [ValidateNotNullOrEmpty()]
-        [Alias('StartAddress')]
-        [string] $Start,
+        [Alias('StartAddress','Start')]
+        [string] $StartIP,
 
         [Parameter(Mandatory,ParameterSetName='Range')]
         [ValidateNotNullOrEmpty()]
-        [Alias('EndAddress')]
-        [string] $End,
+        [Alias('EndAddress','End')]
+        [string] $EndIP,
 
-        [int] $Parent,
+        [Parameter()]
+        [ValidateRange(1, [int]::MaxValue)]
+        [Alias('Parent')]
+        [int] $ParentID,
 
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [Alias('PropertyObject')]
         [PSCustomObject] $Property,
 
@@ -37,15 +83,15 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        if (-not $Parent) {
+        if (-not $ParentID) {
             $BlueCatSession | Confirm-Settings -Config
-            $Parent = $BlueCatSession.idConfig
+            $ParentID = $BlueCatSession.idConfig
         }
 
         # Confirm that the provided parent ID is for an IP4 block or Configuration
-        $BlockCheck = Get-BlueCatEntityById -ID $Parent -BlueCatSession $BlueCatSession
+        $BlockCheck = Get-BlueCatEntityById -ID $ParentID -BlueCatSession $BlueCatSession
         if ($BlockCheck.type -notin ('IP4Block','Configuration')) {
-            throw "ID:$($Parent) type is not IP4Block or Configuration (Type: $($BlockCheck.type))"
+            throw "ID:$($ParentID) type is not IP4Block or Configuration (Type: $($BlockCheck.type))"
         }
 
         $BlockDescription = "$($BlockCheck.type) "
@@ -63,11 +109,11 @@
         $BlockDescription += " (ID:$($BlockCheck.id))"
 
         if ($CIDR) {
-            $Query = "addIP4BlockByCIDR?parentId=$($Parent)&CIDR=$($CIDR)"
+            $Query = "addIP4BlockByCIDR?parentId=$($ParentID)&CIDR=$($CIDR)"
             Write-Verbose "$($thisFN): Add CIDR block $($CIDR) to $($BlockDescription)"
         } else {
-            $Query = "addIP4BlockByRange?parentId=$($Parent)&start=$($Start)&end=$($End)"
-            Write-Verbose "$($thisFN): Add range $($Start)-$($End) to $($BlockDescription)"
+            $Query = "addIP4BlockByRange?parentId=$($ParentID)&start=$($StartIP)&end=$($EndIP)"
+            Write-Verbose "$($thisFN): Add range $($StartIP)-$($EndIP) to $($BlockDescription)"
         }
 
         if ($Property.Name -and $Name) {
@@ -92,7 +138,7 @@
         }
 
         Write-Verbose "$Query"
-        $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Query
+        $BlueCatReply = Invoke-BlueCatApi -Method Post -Request $Query -BlueCatSession $BlueCatSession
         if (-not $BlueCatReply) {
             throw "$($thisFN): Failed to create new IP4 block"
         }
