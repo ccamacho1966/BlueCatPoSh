@@ -6,14 +6,9 @@ function Add-BlueCatSRV
 .DESCRIPTION
     The Add-BlueCatSRV cmdlet will create a new DNS SRV record.
 
-    A Service record (SRV record) is a specification of data in the
-    Domain Name System defining the location, i.e., the hostname and
-    port number, of servers for specified services. It is defined in
-    RFC 2782, and its type code is 33. Some Internet protocols such as
-    the Session Initiation Protocol (SIP) and the Extensible Messaging
-    and Presence Protocol (XMPP) often require SRV support.
+    A Service record (SRV record) is a specification of data in the Domain Name System defining the location, i.e., the hostname and port number, of servers for specified services. It is defined in RFC 2782, and its type code is 33. Some Internet protocols such as the Session Initiation Protocol (SIP) and the Extensible Messaging and Presence Protocol (XMPP) often require SRV support.
 .PARAMETER Name
-    A string value representing the FQDN of the service bring provided.
+    A string value representing the FQDN of the service being provided.
 
     By convention the FQDN format is _[service]._[protocol].zone.tld where:
     * [service] is the symbolic name of the offered service.
@@ -28,8 +23,7 @@ function Add-BlueCatSRV
     An integer value representing the TCP or UDP port the service is found on.
 .PARAMETER Priority
     An integer value representing the relative priority for the target host.
-    Higher value records are LESS preferred and will receive traffic only if
-    connections to lower value targets fail first.
+    Higher value records are LESS preferred and will receive traffic only if connections to lower value targets fail first.
 .PARAMETER Weight
     An integer value representing the relative weight for records with the same priority.
     Higher value records will receive a higher proportion of traffic for the service.
@@ -100,6 +94,7 @@ function Add-BlueCatSRV
         [int] $TTL = -1,
 
         [Parameter(ParameterSetName='ViewID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
