@@ -1,4 +1,30 @@
 ﻿function Convert-BlueCatReply {
+<#
+.SYNOPSIS
+    Convert BlueCat API responses to standard objects.
+.DESCRIPTION
+    The Convert-BlueCatReply is a macro-function that converts a variety of BlueCat API responses to standard object formats.
+
+    In addition to simple conversion, this cmdlet will gather additional related information and add it to the object to improve the usability of the gathered information and ideally reduce the need for additional API calls to gather commonly used related information.
+.PARAMETER RawObject
+    A PSCustomObject representing the 'raw' reply received from the BlueCat API.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for related lookups.
+.EXAMPLE
+    PS> $BlueCatObject = Convert-BlueCatReply -RawObject $BlueCatReply
+
+    Converts the raw reply $BlueCatReply to a standard rich object and saves the result as $BlueCatObject
+    Use the default BlueCat session for any additional lookups
+.EXAMPLE
+    PS> $BlueCatObject = $BlueCatReply | Convert-BlueCatReply -BlueCatSession $Session8
+
+    Converts the raw reply received on the pipeline to a standard rich object and saves the result as $BlueCatObject
+    Use the BlueCat session associated with $Session8 for any additional lookups
+.INPUTS
+    [PSCustomObject] representing the raw reply received from the BlueCat API
+.OUTPUTS
+    [PSCustomObject] with standardized formatting and enriched information
+#>
     [CmdletBinding()]
 
     param(
