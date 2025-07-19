@@ -40,12 +40,12 @@
         }
 
         $Query = "getEntityByName?parentId=$($ParentID)&name=$($Name)&type=$($EntityType)"
-        $result = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
-        if (-not $result.id) {
-            throw "$($EntityType) $($Name) not found: $($result)"
+        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+        if (-not $BlueCatReply.id) {
+            throw "$($EntityType) $($Name) not found: $($BlueCatReply)"
         }
-        Write-Verbose "$($thisFN): Selected $($result.type) #$($result.id) as $($result.name)"
+        Write-Verbose "$($thisFN): Selected $($BlueCatReply.type) #$($BlueCatReply.id) as $($BlueCatReply.name)"
 
-        $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+        $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
     }
 }
