@@ -4,8 +4,8 @@ function Resolve-BlueCatFQDN {
     param(
         [parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [Alias('Name')]
-        [string] $FQDN,
+        [Alias('FQDN')]
+        [string] $Name,
 
         [Parameter(ParameterSetName='ViewID')]
         [ValidateRange(1, [int]::MaxValue)]
@@ -28,7 +28,7 @@ function Resolve-BlueCatFQDN {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $FQDN = $FQDN | Test-ValidFQDN
+        $FQDN = $Name | Test-ValidFQDN
         Write-Verbose "$($thisFN): Searching database for '$($FQDN)'"
 
         if ($View) {
@@ -90,7 +90,7 @@ function Resolve-BlueCatFQDN {
                 } # $result.id is 0 - zone not found
 
                 # update the parent to this new zone and continue processing
-                $zId=$result.id
+                $zId = $result.id
             } # if ($zDig)
             else {
                 # we're done zone digging - append everything else to 'notZone'
@@ -116,17 +116,13 @@ function Resolve-BlueCatFQDN {
 
         $hObj = $null
         if ($zObj) {
-            if (!$Quiet) {
-                Write-Verbose "$($thisFN): Selected Zone #$($zObj.id) as '$($zObj.name)'"
-            }
+            Write-Verbose "$($thisFN): Selected Zone #$($zObj.id) as '$($zObj.name)'"
             $Query = "getEntityByName?parentId=$($zObj.id)&type=HostRecord&name=$($FQDNobj.shortName)"
             $result = Invoke-BlueCatApi -Connection $BlueCatSession -Method Get -Request $Query
             if ($result.id) {
                 $hObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-                if (!$Quiet) {
-                    Write-Verbose "$($thisFN): Selected Host #$($hObj.id) as '$($hObj.name)'"
-                }
-            } elseif (!$Quiet) {
+                Write-Verbose "$($thisFN): Selected Host #$($hObj.id) as '$($hObj.name)'"
+            } else {
                 Write-Verbose "$($thisFN): No host record found in internal zone"
             }
         }
@@ -136,8 +132,9 @@ function Resolve-BlueCatFQDN {
 
         # Search for an external host record matching the requested FQDN
         try {
+            Write-Verbose "$($thisFN): Searching for External Host records..."
             $xhObj = Get-BlueCatExternalHost -BlueCatSession $BlueCatSession -Name $FQDNobj.name 4>$null
-            if ($xhObj -and (-not $Quiet)) {
+            if ($xhObj) {
                 Write-Verbose "$($thisFN): Selected External Host #$($xhObj.id) as '$($xhObj.name)'"
             }
             $FQDNobj | Add-Member -MemberType NoteProperty -Name external -Value $xhObj
@@ -146,17 +143,17 @@ function Resolve-BlueCatFQDN {
         }
 
         if ($hObj -and $xhObj) {
-            if (!$Quiet) {
-                Write-Warning "$($thisFN): Found internal and external host records for '$($FQDNobj.name)'"
-            }
+            Write-Warning "$($thisFN): Found internal and external host records for '$($FQDNobj.name)'"
         }
 
         # Search for a CNAME/Alias if there is a deployable zone
         if ($FQDNobj.zone.id) {
+            Write-Verbose "$($thisFN): Searching for CNAME/Alias records..."
             $Query = "getEntityByName?parentId=$($FQDNobj.zone.id)&type=AliasRecord&name=$($FQDNobj.shortName)"
             $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
 
             if ($result.id) {
+                Write-Verbose "$($thisFN): Resolving Alias #$($result.id)..."
                 $AliasObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
                 Write-Verbose "$($thisFN): Selected Alias #$($AliasObj.id) as '$($AliasObj.name)' (points to $($AliasObj.property.linkedRecordName))"
                 $FQDNobj | Add-Member -MemberType NoteProperty -Name alias -Value $AliasObj
