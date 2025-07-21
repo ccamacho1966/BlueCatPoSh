@@ -1,4 +1,46 @@
 function Resolve-BlueCatFQDN {
+<#
+.SYNOPSIS
+    Searches the IPAM database for data related to the FQDN
+.DESCRIPTION
+    Resolve-BlueCatFQDN is a macro-function that searches the BlueCat database for a variety of information related to the supplied FQDN.
+
+    This cmdlet will attempt to find the DNS zone that contains the supplied FQDN as well as Host records, External Host records, and CNAME/Alias records. It combines this data with related View and Configuration data before returning the macro-object to the caller. This permits the calling script to then test for the existance of member objects to determine if each type of record exists. The member object will be a complete object that can be directly referenced without additional API/function calls.
+
+    Member objects include: zone, host, external, alias, view, config
+.PARAMETER Name
+    A string value representing the FQDN of the record to be searched for.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object creation.
+.EXAMPLE
+    PS> $Results = Resolve-BlueCatFQDN -Name 'myhostname.example.com' -View 1818 -BlueCatSession $Session19
+
+    PS> if ($Results.host) {
+            Write-Output "Found a Host record (ID:$($Results.host.id)) for $($Results.name) in zone $($Results.zone.name) (ID:$($Results.zone.id))"
+        }
+
+    Searches the BlueCat database under view 1818 using BlueCat session $Session19 for 'myhostname.example.com'
+    Stores the results of the cmdlet in the variable $Results
+    Test members zone, host, external, and alias to see if matching records were found.
+    Directly reference the member objects for further related data.
+.INPUTS
+    None.
+.OUTPUTS
+    PSCustomObject containing members:
+     * [string] type = 'FQDN'
+     * [string] name
+     * [string] shortName
+     * [PSCustomObject] zone
+     * [PSCustomObject] host
+     * [PSCustomObject] external
+     * [PSCustomObject] alias
+     * [PSCustomObject] view
+     * [PSCustomObject] config
+#>
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
