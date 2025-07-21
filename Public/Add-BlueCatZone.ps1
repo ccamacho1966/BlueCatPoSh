@@ -22,9 +22,24 @@
 .PARAMETER PassThru
     A switch that causes a PSCustomObject representing the new DNS Zone to be returned.
 .EXAMPLE
+    PS> Add-BlueCatZone -Name 'example.com'
+
+    Create a new DNS zone: example.com
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
 .EXAMPLE
+    PS> Add-BlueCatZone -Name 'another.com' -ViewID 1515 -BlueCatSession $Session7 -PassThru
+
+    Create a new DNS zone another.com using view 1515.
+    Use the BlueCat session associated with $Session7 to create the zone.
+
+    A PSCustomObject representing the new zone will be returned (PassThru).
 .INPUTS
+    None
 .OUTPUTS
+    None, by default.
+
+    If the '-PassThru' switch is used, a PSCustomObject representing the new zone will be returned.
 #>
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
