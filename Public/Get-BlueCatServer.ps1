@@ -30,7 +30,7 @@ Function Get-BlueCatServer {
         if (-not $ConfigID) {
             # No Config ID or Object was supplied so try to use the session default
             $BlueCatSession | Confirm-Settings -Config
-            $ConfigID = $BlueCatSession.idConfig
+            $ConfigID = $BlueCatSession.Config.id
         }
 
         $Query = "getEntityByName?parentId=$($ConfigID)&type=Server&name=$($Name)"

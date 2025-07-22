@@ -66,41 +66,41 @@
     begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState }
 
     process {
-        if ($Name -and !$BlueCatSession.idConfig) {
+        $thisFN = (Get-PSCallStack)[0].Command
+
+        if ($Name -and !$BlueCatSession.Config) {
             throw "Must set config first to set view by Name"
         }
 
-        if ($PSCmdlet.ParameterSetName -eq 'ByID') {
-            $Query = "getEntityById?id=$($id)"
-            $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
-            if (-not $BlueCatReply.id) {
-                throw "$($BlueCatReply) View #$($ID) not found!"
-            }
-            if ($BlueCatReply.type -ne 'View') {
-                throw "$($BlueCatReply) Entity #$($ID) ($($BlueCatReply.name)) is not a View!"
-            }
-
-            $Query = "getParent?entityId=$($ID)"
-            $parent = Invoke-BlueCatApi -Connection $BlueCatSession -Method Get -Request $Query
-            if ($parent.type -eq 'Configuration') {
-                $BlueCatSession | Set-BlueCatConfig -ID $parent.id
-            } else {
-                throw "Parent of $($BlueCatSession.View) is not a Configuration! $($parent)"
-            }
-        } else {
-            $Query = "getEntityByName?parentId=$($BlueCatSession.idConfig)&type=View&name=$($Name)"
-            $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
-            if (-not $BlueCatReply.id) {
-                throw "$($BlueCatReply) View $($name) not found!"
-            }
+        $ViewLookup = @{
+            BlueCatSession = $BlueCatSession
         }
 
-        $BlueCatSession.idView = $BlueCatReply.id
-        $BlueCatSession.View = $BlueCatReply.name
-        Write-Verbose "Set-BlueCatView: Selected View #$($BlueCatSession.idView) as '$($BlueCatSession.View)'"
+        if ($PSCmdlet.ParameterSetName -eq 'ByID') {
+            $ErrorPrefix       = "View #$($ID)"
+            $ViewLookup.ID     = $ID
+        } elseif ($PSCmdlet.ParameterSetName -eq 'ByName') {
+            $ErrorPrefix       = "View '$($Name)'"
+            $ViewLookup.Name   = $Name
+            $ViewLookup.Config = $BlueCatSession.Config
+        }
+
+        $BlueCatReply = Get-BlueCatView @ViewLookup
+
+        if (-not $BlueCatReply.id) {
+            throw "$($ErrorPrefix) not found: $($BlueCatReply)"
+        }
+
+        if ($BlueCatSession.Config.id -ne $BlueCatReply.Config.id) {
+            $BlueCatSession.Config = $BlueCatReply.Config
+            Write-Verbose "$($thisFN): Selected ID:$($BlueCatReply.Config.id) as Configuration '$($BlueCatReply.Config.name)'"
+        }
+
+        $BlueCatSession.View = $BlueCatReply
+        Write-Verbose "$($thisFN): Selected ID:$($BlueCatReply.id) as View '$($BlueCatReply.name)'"
 
         if ($PassThru) {
-            $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+            $BlueCatReply
         }
     }
 }

@@ -18,21 +18,19 @@ module directly in the root module.
 #>
 
 class BlueCat {
-    hidden static [int]$NextIndex = 1
+    hidden static [int] $NextIndex = 1
     hidden [string] $idTag
     [string] $Server
-    [psobject] $property
-    hidden [string] $properties
+    [psobject] $Property
+    hidden [string] $Properties
     [string] $Username
     hidden [PSCredential] $Credential
     hidden [string] $Auth = ''
     [datetime] $SessionStart
     [datetime] $SessionRefresh
     [int] $SessionCount = 0
-    [string] $View = ''
-    [int] $idView = 0
-    [string] $Config = ''
-    [int] $idConfig = 0
+    [PSCustomObject] $View = $null
+    [PSCustomObject] $Config = $null
 
     BlueCat([string]$Server, [pscredential]$Credential) {
         $this.Server     = $Server
@@ -41,8 +39,8 @@ class BlueCat {
 
         $this.Login()
 
-        $this.properties = Invoke-BlueCatApi -Method Get -Request 'getSystemInfo' -Connection $this
-        $this.property   = Convert-BlueCatPropertyString -PropertyString $this.properties
+        $this.Properties = Invoke-BlueCatApi -Method Get -Request 'getSystemInfo' -Connection $this
+        $this.Property   = Convert-BlueCatPropertyString -PropertyString $this.Properties
         $this.idTag      = "$([BlueCat]::NextIndex)-$($this.Username)@$($this.Server)"
         [BlueCat]::NextIndex++
         [string[]] $propList = @('Server','Username','Config','View')

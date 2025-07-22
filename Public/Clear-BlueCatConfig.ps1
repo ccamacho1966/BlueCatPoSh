@@ -44,17 +44,16 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        if ($BlueCatSession.idView) {
+        if ($BlueCatSession.View) {
             $BlueCatSession | Clear-BlueCatView
         }
 
-        if ((-not $BlueCatSession.idConfig) -and (!$Force)) {
+        if ((-not $BlueCatSession.Config) -and (!$Force)) {
             Write-Warning "$($thisFN): Config was not set. Use '-Force' to suppress this warning."
         } else {
-            Write-Verbose "$($thisFN): Cleared default configuration $($BlueCatSession.Config) (ID:$($BlueCatSession.idConfig)) from session $($BlueCatSession.Username)@$($BlueCatSession.Server)"
+            Write-Verbose "$($thisFN): Cleared default configuration $($BlueCatSession.Config.name) (ID:$($BlueCatSession.Config.id)) from session $($BlueCatSession.Username)@$($BlueCatSession.Server)"
         }
 
-        $BlueCatSession.idConfig = 0
         $BlueCatSession.Config = $null
     }
 }

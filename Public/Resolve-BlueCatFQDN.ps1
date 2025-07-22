@@ -86,8 +86,8 @@ function Resolve-BlueCatFQDN {
         if (-not $ViewID) {
             # No view ID has been passed in so attempt to use the default view
             $BlueCatSession | Confirm-Settings -View
-            $ViewID = $BlueCatSession.idView
-            Write-Verbose "$($thisFN): Using default view $($BlueCatSession.View)"
+            $ViewID = $BlueCatSession.View.id
+            Write-Verbose "$($thisFN): Using default view $($BlueCatSession.View.name)"
         }
 
         if (-not $View) {

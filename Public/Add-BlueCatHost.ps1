@@ -97,8 +97,8 @@
         }
 
         if (-not $ConfigID) {
-            if ($BlueCatSession.idConfig) {
-                $ConfigID       = $BlueCatSession.idConfig
+            if ($BlueCatSession.Config) {
+                $ConfigID       = $BlueCatSession.Config.id
             }
         }
 

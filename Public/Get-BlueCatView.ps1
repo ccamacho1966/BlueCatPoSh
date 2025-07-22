@@ -98,7 +98,7 @@
             } else {
                 # Get all views in a specific Config ID (or the default configuration, if set)
                 if (-not $ConfigID) {
-                    $ConfigID = $BlueCatSession.idConfig
+                    $ConfigID = $BlueCatSession.Config.id
                 }
 
                 if ($ConfigID) {
@@ -132,7 +132,7 @@
                 }
                 if (-not $ConfigID) {
                     # No Config ID or Object was supplied so try to use the session default
-                    $ConfigID = $BlueCatSession.idConfig
+                    $ConfigID = $BlueCatSession.Config.id
                 }
                 if ($ConfigID) {
                     # Attempt to retrieve the view if we have a config to search in
@@ -140,12 +140,11 @@
                 }
             } else {
                 # Find a view using an ID, if supplied
-                if ((-not $ViewID) -and ($BlueCatSession.idView)) {
+                if ((-not $ViewID) -and ($BlueCatSession.View)) {
                     # No ID was supplied, but there is a default View so use that
-                    Write-Verbose "$($thisFN): Using default view for lookup"
-                    $ViewID = $BlueCatSession.idView
-                }
-                if ($ViewID) {
+                    Write-Verbose "$($thisFN): Returning default view"
+                    $objView = $BlueCatSession.View
+                } elseif ($ViewID) {
                     # Lookup the View by the selected ID, otherwise do nothing and return NULL
                     $objView = Get-BlueCatEntityById -ID $ViewID -BlueCatSession $BlueCatSession
                     if ($objView.type -ne 'View') {

@@ -37,8 +37,8 @@ Function Get-BlueCatSRV {
         if (-not $ViewID) {
             # No view ID has been passed in so attempt to use the default view
             $BlueCatSession | Confirm-Settings -View
-            Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View)' (ID:$($BlueCatSession.idView))"
-            $ViewID = $BlueCatSession.idView
+            Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View.name)' (ID:$($BlueCatSession.View.id))"
+            $ViewID = $BlueCatSession.View.id
         }
 
         # Trim any trailing dots from the name for consistency/display purposes

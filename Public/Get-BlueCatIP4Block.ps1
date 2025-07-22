@@ -28,8 +28,8 @@
         if (-not $Parent) {
             # No parent ID has been passed in so attempt to use the default configuration
             $BlueCatSession | Confirm-Settings -Config
-            Write-Verbose "$($thisFN): Using default configuration '$($BlueCatSession.Config)' (ID:$($BlueCatSession.idConfig))"
-            $Parent = $BlueCatSession.idConfig
+            Write-Verbose "$($thisFN): Using default configuration '$($BlueCatSession.Config.name)' (ID:$($BlueCatSession.Config.id))"
+            $Parent = $BlueCatSession.Config.id
         }
 
         # Build lookup URI based on type of lookup (CIDR vs Range)

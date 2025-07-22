@@ -12,7 +12,7 @@
 
     process {
         if ($Config -or $View) {
-            if (-not $BlueCatSession.idConfig) {
+            if (-not $BlueCatSession.Config) {
                 $testCFError = [Exception]::new('"Configuration Error: You must select a configuration before calling this command."')
                 $CFErrorRecord = [System.Management.Automation.ErrorRecord]::new(
                     $testCFError,
@@ -25,7 +25,7 @@
         }
 
         if ($View) {
-            if (-not $BlueCatSession.idView) {
+            if (-not $BlueCatSession.View) {
                 $testCFError = [Exception]::new('"View Error: You must select a view before calling this command."')
                 $CFErrorRecord = [System.Management.Automation.ErrorRecord]::new(
                     $testCFError,

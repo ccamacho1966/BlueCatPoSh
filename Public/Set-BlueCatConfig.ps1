@@ -62,28 +62,28 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
+        $ConfigLookup = @{
+            BlueCatSession = $BlueCatSession
+        }
         if ($PSCmdlet.ParameterSetName -eq 'ByID') {
-            $Query = "getEntityById?id=$($ID)"
             $ErrorPrefix = "Configuration #$($ID)"
+            $ConfigLookup.ID = $ID
         } else {
-            $Query = "getEntityByName?parentId=0&type=Configuration&name=$($Name)"
             $ErrorPrefix = "Configuration '$($Name)'"
+            $ConfigLookup.Name = $Name
         }
 
-        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+        $BlueCatReply = Get-BlueCatConfig @ConfigLookup
 
         if (-not $BlueCatReply.id) {
             throw "$($ErrorPrefix) not found: $($BlueCatReply)"
-        } elseif ($BlueCatReply.type -ne 'Configuration') {
-            throw "Entity $($ID) is now a Configuration (Type:$($BlueCatReply.type))"
         }
 
-        $BlueCatSession.idConfig = $BlueCatReply.id
-        $BlueCatSession.Config   = $BlueCatReply.name
+        $BlueCatSession.Config = $BlueCatReply
         Write-Verbose "$($thisFN): Selected ID:$($BlueCatReply.id) as Configuration '$($BlueCatReply.name)'"
 
         if ($PassThru) {
-            $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+            $BlueCatReply
         }
     }
 }

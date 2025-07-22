@@ -42,13 +42,12 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        if ((-not $BlueCatSession.idView) -and (!$Force)) {
+        if ((-not $BlueCatSession.View) -and (!$Force)) {
             Write-Warning "$($thisFN): View was not set. Use '-Force' to suppress this warning."
         } else {
-            Write-Verbose "$($thisFN): Cleared default view $($BlueCatSession.View) (ID:$($BlueCatSession.idView)) from session $($BlueCatSession.Username)@$($BlueCatSession.Server)"
+            Write-Verbose "$($thisFN): Cleared default view $($BlueCatSession.View.name) (ID:$($BlueCatSession.View.id)) from session $($BlueCatSession.Username)@$($BlueCatSession.Server)"
         }
 
-        $BlueCatSession.idView = 0
         $BlueCatSession.View = $null
     }
 }

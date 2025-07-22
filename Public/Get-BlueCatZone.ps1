@@ -31,7 +31,7 @@
         }
         if (-not $ViewID) {
             $BlueCatSession | Confirm-Settings -View
-            $ViewID = $BlueCatSession.idView
+            $ViewID = $BlueCatSession.View.id
         }
 
         $zPath = $Zone.Split('\.')

@@ -33,13 +33,16 @@
             if ($ParentID) {
                 Write-Warning "Ignoring ParentID for EntityType=Configuration lookup..."
             }
-            $ParentID=0
-        } elseif (-not $ParentID) {
-            $BlueCatSession | Confirm-Settings -Config
-            $ParentID = $BlueCatSession.idConfig
+            $Query = "getEntityByName?parentId=0"
+        } else {
+            if (-not $ParentID) {
+                $BlueCatSession | Confirm-Settings -Config
+                $ParentID = $BlueCatSession.Config.id
+            }
+            $Query = "getEntityByName?parentId=$($ParentID)"
         }
 
-        $Query = "getEntityByName?parentId=$($ParentID)&name=$($Name)&type=$($EntityType)"
+        $Query += "&name=$($Name)&type=$($EntityType)"
         $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
         if (-not $BlueCatReply.id) {
             throw "$($EntityType) $($Name) not found: $($BlueCatReply)"

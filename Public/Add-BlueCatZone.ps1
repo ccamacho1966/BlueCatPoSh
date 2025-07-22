@@ -89,7 +89,7 @@
             $ViewID           = $View.ID
         } else {
             $BlueCatSession | Confirm-Settings -View
-            $View             = Get-BlueCatView -ViewID $BlueCatSession.idView -BlueCatSession $BlueCatSession
+            $View             = $BlueCatSession.View
             $ViewID           = $View.ID
             $LookupParms.View = $View
         }

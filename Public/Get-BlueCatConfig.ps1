@@ -72,8 +72,8 @@
             } else {
                 if ($ConfigID) {
                     Write-Verbose "$($thisFN): ID='$($ConfigID)'"
-                } elseif ($BlueCatSession.idConfig) {
-                    $ConfigID = $BlueCatSession.idConfig
+                } elseif ($BlueCatSession.Config) {
+                    $ConfigID = $BlueCatSession.Config.id
                     Write-Verbose "$($thisFN): Default Config ($($ConfigID))"
                 } else {
                     Write-Verbose "$($thisFN): No parameters provided and no default config is set"

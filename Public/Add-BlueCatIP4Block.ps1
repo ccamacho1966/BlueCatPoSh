@@ -85,7 +85,7 @@
 
         if (-not $ParentID) {
             $BlueCatSession | Confirm-Settings -Config
-            $ParentID = $BlueCatSession.idConfig
+            $ParentID = $BlueCatSession.Config.id
         }
 
         # Confirm that the provided parent ID is for an IP4 block or Configuration
