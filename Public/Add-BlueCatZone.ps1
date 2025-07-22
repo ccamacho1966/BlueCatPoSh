@@ -128,7 +128,7 @@
 
         $CreateZone = @{
             Method         = 'Post'
-            Request        = "addZone?parentId=$($ViewID)&absoluteName=$($NewZone)&properties=$($PropertyString)"
+            Request        = "addZone?parentId=$($ViewID)&absoluteName=$($NewZone)&properties=$([uri]::EscapeDataString($PropertyString))"
             BlueCatSession = $BlueCatSession
         }
 

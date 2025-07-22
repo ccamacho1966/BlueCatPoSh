@@ -94,7 +94,7 @@
 
         $FQDN = $Name | Test-ValidFQDN
         $LookupParms = @{
-            FQDN           = $FQDN
+            Name           = $FQDN
             BlueCatSession = $BlueCatSession
         }
         if ($ViewID) {
@@ -129,7 +129,7 @@
         $NewLinked         = $LinkedHost | Test-ValidFQDN
         $LookupLinked.Name = $NewLinked
 
-        $LinkedInfo        = Resolve-BlueCatFQDN @$LookupLinked
+        $LinkedInfo        = Resolve-BlueCatFQDN @LookupLinked
         $propString = "ttl=$($TTL)|absoluteName=$($AliasInfo.name)|linkedRecordName=$($LinkedInfo.name)|"
         if ($LinkedInfo.host) {
             $linkedName = $LinkedInfo.host.name
