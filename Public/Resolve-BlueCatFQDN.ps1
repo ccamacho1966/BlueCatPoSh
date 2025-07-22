@@ -123,7 +123,7 @@ function Resolve-BlueCatFQDN {
                         $zObj = Convert-BlueCatReply -Connection $BlueCatSession -RawObject $lastResult
                         # we matched a path, but not a deployable zone...
                         # put the entire path into 'notZone' and null out the zone object
-                        if ($zObj.property.deployable -eq 'false') {
+                        if (-not $zObj.property.deployable) {
                             Write-Verbose "$($thisFN): No deployable zone found for '$($bit).$($zObj.property.absoluteName)'"
                             $notZone = "$($bit).$($zObj.property.absoluteName)"
                             $zObj = $null
@@ -145,7 +145,7 @@ function Resolve-BlueCatFQDN {
             $zObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
             # set notZone to a blank string and retrieve the zone info!
             $notZone = ''
-            if ($zObj.property.deployable -eq 'false') {
+            if (-not $zObj.property.deployable) {
                 $notZone = "$($bit).$($zObj.property.absoluteName)"
                 $zObj = $null
             } # zone not deployable

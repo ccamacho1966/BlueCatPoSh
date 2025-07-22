@@ -28,7 +28,13 @@
         $Properties     = $Property.TrimEnd('|').Split('|')
         foreach ($PropertyItem in $Properties) {
             $bits = $PropertyItem.Split('=',2)
-            $PropertyObject | Add-Member -MemberType NoteProperty -Name $bits[0] -Value $bits[1]
+            if ($bits[1] -eq 'false') {
+                $PropertyObject | Add-Member -MemberType NoteProperty -Name $bits[0] -Value $false
+            } elseif ($bits[1] -eq 'true') {
+                $PropertyObject | Add-Member -MemberType NoteProperty -Name $bits[0] -Value $true
+            } else {
+                $PropertyObject | Add-Member -MemberType NoteProperty -Name $bits[0] -Value $bits[1]
+            }
         }
 
         $PropertyObject

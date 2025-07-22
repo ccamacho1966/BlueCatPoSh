@@ -29,7 +29,11 @@
         $PropertyString=''
         foreach ($item in $Property.PSObject.Properties) {
             if ($item.Name -notmatch '^ip4[bn].*') {
-                $PropertyString += "$($item.Name)=$($item.Value)|"
+                if ((($item.Value).GetType()).Name -eq 'Boolean') {
+                    $PropertyString += "$($item.Name)=$(($item.Value).toString().toLower())|"
+                } else {
+                    $PropertyString += "$($item.Name)=$($item.Value)|"
+                }
             }
         }
 
