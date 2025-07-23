@@ -1,4 +1,50 @@
 ﻿function Get-BlueCatAlias { # also known as CNAME
+<#
+.SYNOPSIS
+    Retrieve an Alias (CNAME)
+.DESCRIPTION
+    The Get-BlueCatAlias cmdlet allows the retrieval of DNS CNAME records.
+
+    A Canonical Name (CNAME) record is a type of resource record in the Domain Name System (DNS) that maps one domain name (an alias) to another (the canonical name).
+    
+    CNAME records must always point to another domain name, never directly to an IP address.
+
+    If a CNAME record is present at a node, no other data should be present; this ensures that the data for a canonical name and its aliases cannot be different.
+.PARAMETER Name
+    A string value representing the FQDN of the CNAME (Alias) to be retrieved.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object lookup.
+.EXAMPLE
+    PS> Get-BlueCatAlias -Name myalias.example.com
+
+    Returns a PSCustomObject representing the requested alias, or NULL if not found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Get-BlueCatCNAME -Name myservice.example.com -ViewID 23456 -BlueCatSession $Session6
+
+    Returns a PSCustomObject representing the requested alias, or NULL if not found.
+    Use the BlueCatSession associated with $Session6 to perform this lookup.
+    The record will be searched for in view 23456.
+.INPUTS
+    None
+.OUTPUTS
+    PSCustomObject representing the requested alias, or NULL if not found.
+
+    [int] id
+    [string] name
+    [string] shortName
+    [string] type = 'AliasRecord'
+    [string] properties
+    [PSCustomObject] property
+    [PSCustomObject] config
+    [PSCustomObject] view
+    [PSCustomObject] zone
+#>
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(

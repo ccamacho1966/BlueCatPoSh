@@ -1,4 +1,30 @@
 ﻿function Get-BlueCatEntityById {
+<#
+.SYNOPSIS
+    Retrieve BlueCat Entity by its Entity ID (API Call: getEntityById)
+.DESCRIPTION
+    The Get-BlueCatEntityById cmdlet allows the retrieval of a specific BlueCat entity by its Entity ID.
+.PARAMETER ID
+    An integer value that represents the entity ID of object to be retrieved.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object lookup.
+.EXAMPLE
+    PS> Get-BlueCatEntityById -ID 105127
+
+    Returns a PSCustomObject representing the specific Entity ID.
+    A null value is returned if the Entity ID does not exist.
+    BlueCatSession will default to the current default session.
+.EXAMPLE
+    PS> Get-BlueCatEntityById -ID 105272 -BlueCatSession $Session7
+
+    Returns a PSCustomObject representing the specific Entity ID.
+    A null value is returned if the Entity ID does not exist.
+    BlueCatSession $Session7 will be used to perform the lookup.
+.INPUTS
+    None
+.OUTPUTS
+    PSCustomObject representing BlueCat entity, or NULL if not found.
+#>
     [CmdletBinding()]
 
     param(

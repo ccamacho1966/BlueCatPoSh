@@ -1,4 +1,40 @@
 function Get-BlueCatExternalHost {
+<#
+.SYNOPSIS
+    Retrieve an external host record
+.DESCRIPTION
+    The Get-BlueCatExternalHost cmdlet allows the retrieval of external host records.
+.PARAMETER Name
+    A string value representing the FQDN of the external host to be retrieved.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object lookup.
+.EXAMPLE
+    PS> Get-BlueCatExternalHost -Name 'autodiscover.outlook.com'
+
+    Returns a PSCustomObject representing the external host, or NULL if not found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Get-BlueCatExternalHost -Name 'sendgrid.net' -ViewID 23456 -BlueCatSession $Session9
+
+    Returns a PSCustomObject representing the external host, or NULL if not found.
+    Use the BlueCatSession associated with $Session9 to perform this lookup.
+    The record will be searched for in view 23456.
+.INPUTS
+    None
+.OUTPUTS
+    PSCustomObject representing the requested alias, or NULL if not found.
+
+    [int] id
+    [string] name
+    [string] type = 'ExternalHostRecord'
+    [PSCustomObject] config
+    [PSCustomObject] view
+#>
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
@@ -8,7 +44,7 @@ function Get-BlueCatExternalHost {
 
         [Parameter(ParameterSetName='ViewID')]
         [ValidateRange(1, [int]::MaxValue)]
-        [int]$ViewID,
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
