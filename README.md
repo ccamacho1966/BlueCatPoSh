@@ -1,10 +1,10 @@
-# BlueCatPoSh - Our BlueCat IPAM PowerShell Library
+# BlueCatPoSh - BlueCat IPAM PowerShell Library
 
-Leveraging the BlueCat IPAM API has generally been complex in our environment so we have been experimenting with libraries to standardize and simplify this access for us. BlueCatPoSh is the 3rd generation of my local library implementation for PowerShell and I'm working to clean it up and make it useful to a larger audience.
+Leveraging the BlueCat IPAM API has generally been complex in our environment so I have been experimenting with a library to standardize and simplify access. BlueCatPoSh is the 3rd generation of my local library implementation for PowerShell and I'm working to clean it up and make it useful to a larger audience.
 
 BlueCatPoSh attempts to move beyond a simple one-for-one implementation of the IPAM API and incorporate sanity and prerequisite testing at the most basic level. There are a few more robust functions to simplify or expand the data collection/update process as well.
 
-This library is still very much an imperfect work in progress, but I am still actively working on it.
+This library is still very much an imperfect work in progress, but I am still actively working on it. At this time it is DNS focused as that is what I work on with BlueCat the most.
 
 ## Supported Environments
 
@@ -36,7 +36,7 @@ $bcCredential = Get-Credential
 Connect-BlueCat -Server 'ipam.example.com' -Credential $bcCredential
 ```
 
-Your session will be stored in the $BlueCatSession variable. This session will be used as the default if you do not specify a session for other library cmdlets. You can create non-default sessions by using the -PassThru flag and catching the session variable as a return value.
+Your session will be stored in the $BlueCatSession variable. This session will be used as the default if you do not specify a session for other library cmdlets. You can create non-default sessions by using the -PassThru flag and catching the session variable as the return value.
 
 For more information see:
 
@@ -50,7 +50,7 @@ You can also set a default View or Configuration. Setting these will establish d
 Set-BlueCatConfig -Name 'CORPORATE'
 ```
 
-Will update the default $BlueCatSession object with the name and entity ID of your chosen Configuration.
+Will update the default $BlueCatSession object with your chosen Configuration.
 
 Similarly, you can set a default View instead:
 
@@ -58,7 +58,7 @@ Similarly, you can set a default View instead:
 Set-BlueCatView -Name 'Developers'
 ```
 
-This will update the default $BlueCatSession object with the name and entity ID of your chosen View. To set the View by name you must set the default Configuration first.
+This will update the default $BlueCatSession object with your chosen View. To set the View by name you must set the default Configuration first.
 
 > [!IMPORTANT]
 > Names of Configurations and Views are case-sensitive.
@@ -86,4 +86,4 @@ Get-BlueCatView -All -EveryConfig
 
 ## Support
 
-I have a small team that assists me with the support of our tools and libraries. Please feel free to log issues/bugs and feature requests. Code contributions are welcome as well. We'll respond as quickly as time permits.
+Its mostly just me, but I do have a small team that assists me with the support of tools and libraries that I can tap if the work is useful in our environment. Please feel free to log issues/bugs and feature requests. Code contributions are welcome as well. I'll respond as quickly as time permits.
