@@ -84,7 +84,10 @@
 
             # Create a 'shortName' for DNS records - Replace the default name with the absolute name
             if (($newObj.type -eq 'Zone') -or ($newObj.type -match '.*Record$')) {
-                $newObj | Add-Member -MemberType NoteProperty -Name 'shortName' -Value $newObj.name
+                if ($newObj.type -ne 'ExternalHostRecord') {
+                    # External Host Records do not have short names
+                    $newObj | Add-Member -MemberType NoteProperty -Name 'shortName' -Value $newObj.name
+                }
                 if ($newObj.property.absoluteName) { $newObj.name = $newObj.property.absoluteName }
             }
 
