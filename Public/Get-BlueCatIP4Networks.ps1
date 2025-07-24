@@ -67,7 +67,7 @@
                     $i = 0
                     $perLoop = 10
                     do {
-                        $addrResult = Get-BlueCatIP4Addresses -Parent ($ip4net.id) -Start $i -Count $perLoop -BlueCatSession $BlueCatSession
+                        $addrResult = Get-BlueCatIP4Addresses -Network $ip4net -Start $i -Count $perLoop -BlueCatSession $BlueCatSession
                         if ($addrResult.Count) {
                             $addressList += $addrResult
                         }
