@@ -1,4 +1,44 @@
 ﻿function Get-BlueCatHost {
+<#
+.SYNOPSIS
+    Retrieve a Host record (A/AAAA)
+.DESCRIPTION
+    The Get-BlueCatHost cmdlet allows the retrieval of DNS A and AAAA records.
+.PARAMETER Name
+    A string value representing the FQDN of the Host record to be retrieved.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object lookup.
+.EXAMPLE
+    PS> Get-BlueCatHost -Name server1.example.com
+
+    Returns a PSCustomObject representing the requested host record, or NULL if not found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Get-BlueCatCNAME -Name server9.example.com -ViewID 23456 -BlueCatSession $Session3
+
+    Returns a PSCustomObject representing the requested host record, or NULL if not found.
+    Use the BlueCatSession associated with $Session3 to perform this lookup.
+    The record will be searched for in view 23456.
+.INPUTS
+    None
+.OUTPUTS
+    PSCustomObject representing the requested host record, or NULL if not found.
+
+    [int] id
+    [string] name
+    [string] shortName
+    [string] type = 'HostRecord'
+    [string] properties
+    [PSCustomObject] property
+    [PSCustomObject] config
+    [PSCustomObject] view
+    [PSCustomObject] zone
+#>
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
@@ -9,7 +49,7 @@
 
         [Parameter(ParameterSetName='ViewID')]
         [ValidateRange(1, [int]::MaxValue)]
-        [int]$ViewID,
+        [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
