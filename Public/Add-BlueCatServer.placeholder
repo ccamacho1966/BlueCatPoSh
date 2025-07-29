@@ -17,7 +17,10 @@ function Add-BlueCatServer {
         })] [string] $Profile = 'OTHER_DNS_SERVER'
     )
 
-    begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
+    begin {
+        Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        if (-not $BlueCatSession) { throw 'No active BlueCatSession found' }
+    }
 
     process {
         $null

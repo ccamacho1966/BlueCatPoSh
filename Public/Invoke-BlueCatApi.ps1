@@ -18,7 +18,10 @@
         [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
 
-    begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
+    begin {
+        Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        if (-not $BlueCatSession) { throw 'No active BlueCatSession found' }
+    }
 
     process {
         $RestCall = @{

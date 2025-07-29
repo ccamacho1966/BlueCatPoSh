@@ -37,7 +37,10 @@
         [switch] $Force
     )
 
-    begin { Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState } 
+    begin {
+        Get-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        if (-not $BlueCatSession) { throw 'No active BlueCatSession found' }
+    }
 
     process {
         $thisFN = (Get-PSCallStack)[0].Command

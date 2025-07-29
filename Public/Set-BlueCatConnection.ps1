@@ -22,7 +22,8 @@
     [CmdletBinding()]
 
     param(
-        [parameter(ValueFromPipeline,Mandatory,Position=0)]
+        [Parameter(ValueFromPipeline,Mandatory,Position=0)]
+        [ValidateNotNullOrEmpty()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession
     )
