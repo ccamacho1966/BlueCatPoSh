@@ -1,4 +1,46 @@
 Function Get-BlueCatMX {
+<#
+.SYNOPSIS
+    Retrieve a set of MX records
+.DESCRIPTION
+    The Get-BlueCatMX cmdlet allows the retrieval of a set of DNS MX records.
+.PARAMETER Name
+    A string value representing the FQDN of the MX records to be retrieved.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object lookup.
+.EXAMPLE
+    PS> Get-BlueCatMX -Name server1.example.com
+
+    Returns a PSCustomObject representing one or more MX records, or NULL if none are found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Get-BlueCatMX -Name server9.example.com -ViewID 23456 -BlueCatSession $Session3
+
+    Returns a PSCustomObject representing the set of MX records, or NULL if none are found.
+    Use the BlueCatSession associated with $Session3 to perform this lookup.
+    The record will be searched for in view 23456.
+.INPUTS
+    None
+.OUTPUTS
+    PSCustomObject representing the requested set of MX records, or NULL if not found.
+
+    [int] id
+    [string] name
+    [string] shortName
+    [string] type = 'MXList'
+    [PSCustomObject[]] MXList
+        [int] id
+        [int] priority
+        [string] relay
+    [PSCustomObject] config
+    [PSCustomObject] view
+    [PSCustomObject] zone
+#>
     [CmdletBinding()]
 
     param(

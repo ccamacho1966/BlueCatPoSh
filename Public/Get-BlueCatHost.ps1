@@ -19,7 +19,7 @@
     BlueCatSession will default to the current default session.
     View will default to the BlueCatSession default view.
 .EXAMPLE
-    PS> Get-BlueCatCNAME -Name server9.example.com -ViewID 23456 -BlueCatSession $Session3
+    PS> Get-BlueCatHost -Name server9.example.com -ViewID 23456 -BlueCatSession $Session3
 
     Returns a PSCustomObject representing the requested host record, or NULL if not found.
     Use the BlueCatSession associated with $Session3 to perform this lookup.
