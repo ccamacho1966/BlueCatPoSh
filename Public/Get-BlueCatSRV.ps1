@@ -1,4 +1,48 @@
 Function Get-BlueCatSRV {
+<#
+.SYNOPSIS
+    Retrieve a set of SRV records
+.DESCRIPTION
+    The Get-BlueCatSRV cmdlet allows the retrieval of a set of DNS SRV records.
+.PARAMETER Name
+    A string value representing the FQDN of the SRV records to be retrieved.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object lookup.
+.EXAMPLE
+    PS> Get-BlueCatSRV -Name server1.example.com
+
+    Returns a PSCustomObject representing one or more SRV records, or NULL if none are found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Get-BlueCatSRV -Name server9.example.com -ViewID 23456 -BlueCatSession $Session3
+
+    Returns a PSCustomObject representing the set of SRV records, or NULL if none are found.
+    Use the BlueCatSession associated with $Session3 to perform this lookup.
+    The record will be searched for in view 23456.
+.INPUTS
+    None
+.OUTPUTS
+    PSCustomObject representing the requested set of SRV records, or NULL if not found.
+
+    [int] id
+    [string] name
+    [string] shortName
+    [string] type = 'SRVList'
+    [PSCustomObject[]] SRVList
+        [int] id
+        [string] target
+        [int] port
+        [int] priority
+        [int] weight
+    [PSCustomObject] config
+    [PSCustomObject] view
+    [PSCustomObject] zone
+#>
     [CmdletBinding()]
 
     param(
