@@ -22,7 +22,7 @@
             $Query = "getParent?entityId=$($traceId)"
             $parent = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
             if (-not $parent.id) {
-                throw "Entity Id $($traceId) not found!"
+                throw "Parent for Entity Id $($traceId) not found!"
             }
             if ($parent.type -ne 'View') {
                 $traceId = $parent.id
