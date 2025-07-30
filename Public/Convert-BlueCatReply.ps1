@@ -51,6 +51,8 @@
             return $RawObject
         }
 
+        Write-Verbose "$($thisFN): $($RawObject | ConvertTo-Json -Depth 5 -Compress)"
+
         # All BlueCat objects have an ID, name, and object type
         $newObj = New-Object -TypeName PSCustomObject
         $newObj | Add-Member -MemberType NoteProperty -Name 'id'   -Value $RawObject.id
@@ -82,7 +84,7 @@
             # Add a Config reference to views and that is all
             $configObj = Get-BlueCatParent -Connection $BlueCatSession -id $RawObject.id
             $newObj    | Add-Member -MemberType NoteProperty -Name 'config' -Value $configObj
-        } elseif ($RawObject.type -notin ('Configuration','PublishedServerInterface')) {
+        } elseif ($RawObject.type -notin ('Configuration','NetworkInterface','NetworkServerInterface','PublishedServerInterface')) {
             # Configurations and Server Interfaces do not get config or view references
 
             # Create a 'shortName' for DNS records - Replace the default name with the absolute name
@@ -95,7 +97,7 @@
             }
 
             # Conditionally add config and view references to objects
-            if (($newObj.type -eq 'Server') -or ($newObj.type -match '^IP4[BNA].*') -or ($newObj.type -match '.*ServerInterface')) {
+            if (($newObj.type -eq 'Server') -or ($newObj.type -match '^IP4[BNA].*')) {
                 # Only include config reference
                 $configObj = Trace-BlueCatConfigFor -id $newObj.id -Connection $BlueCatSession
             } else {
