@@ -95,7 +95,7 @@
             }
 
             # Conditionally add config and view references to objects
-            if (($newObj.type -eq 'Server') -or ($newObj.type -match '^IP4[BNA].*')) {
+            if (($newObj.type -eq 'Server') -or ($newObj.type -match '^IP4[BNA].*') -or ($newObj.type -match '.*ServerInterface')) {
                 # Only include config reference
                 $configObj = Trace-BlueCatConfigFor -id $newObj.id -Connection $BlueCatSession
             } else {
