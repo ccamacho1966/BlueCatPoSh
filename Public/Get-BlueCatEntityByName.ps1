@@ -85,10 +85,10 @@
         $Query += "&name=$($Name)&type=$($EntityType)"
         $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
         if (-not $BlueCatReply.id) {
-            throw "$($EntityType) $($Name) not found: $($BlueCatReply)"
+            Write-Verbose "$($EntityType) $($Name) not found: $($BlueCatReply)"
+        } else {
+            Write-Verbose "$($thisFN): Selected $($BlueCatReply.type) #$($BlueCatReply.id) as $($BlueCatReply.name)"
+            $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
         }
-        Write-Verbose "$($thisFN): Selected $($BlueCatReply.type) #$($BlueCatReply.id) as $($BlueCatReply.name)"
-
-        $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
     }
 }
