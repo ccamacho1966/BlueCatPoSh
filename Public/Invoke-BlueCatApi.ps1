@@ -1,4 +1,32 @@
 ﻿function Invoke-BlueCatApi {
+<#
+.SYNOPSIS
+    Directly invoke the BlueCat v1 REST API
+.DESCRIPTION
+    Invoke-BlueCatApi is an underlying function that directly invokes the v1 REST API of the BlueCat IPAM appliance.
+
+    This cmdlet takes the 'Request' parameter and applies it to the path "https://$SERVER/Services/REST/v1/" and can accept Get, Post, and Put calls currently.
+.PARAMETER Method
+    A string value representing REST method, currently 'Get', 'Post', or 'Put'.
+.PARAMETER Request
+    A string value representing the API call attached to the v1 REST API.
+.PARAMETER Body
+    A string value representing the literal body of a Put or Post request.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object creation.
+.EXAMPLE
+    PS> $Results = Invoke-BlueCatApi -Method Get -Request 'getSystemInfo'
+
+    Invokes the v1 REST API endpoint 'getSystemInfo' and stores the reply in the $Results variable.
+    BlueCatSession will default to the current default session.
+.INPUTS
+    None.
+.OUTPUTS
+    Varies depending on the reply from the API.
+    If the API returns an integer, the output is an Int64.
+    If the API returns a string, the output is a String.
+    If the API returns JSON data, the output is a PSObject.
+#>
     [CmdletBinding()]
 
     param(
