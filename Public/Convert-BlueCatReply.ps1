@@ -3,7 +3,7 @@
 .SYNOPSIS
     Convert BlueCat API responses to standard objects.
 .DESCRIPTION
-    The Convert-BlueCatReply is a macro-function that converts a variety of BlueCat API responses to standard object formats.
+    Convert-BlueCatReply is a macro-function that converts a variety of BlueCat API responses to standard object formats.
 
     In addition to simple conversion, this cmdlet will gather additional related information and add it to the object to improve the usability of the gathered information and ideally reduce the need for additional API calls to gather commonly used related information.
 .PARAMETER RawObject
@@ -99,15 +99,15 @@
             # Conditionally add config and view references to objects
             if (($newObj.type -eq 'Server') -or ($newObj.type -match '^IP4[BNA].*')) {
                 # Only include config reference
-                $configObj = Trace-BlueCatConfigFor -id $newObj.id -Connection $BlueCatSession
+                $configObj = Trace-BlueCatRoot -Object $newObj -Type Configuration -BlueCatSession $BlueCatSession
             } else {
                 # Include both a config and view reference
-                $viewObj   = Trace-BlueCatViewFor -id $newObj.id -Connection $BlueCatSession
-                $configObj = Get-BlueCatParent -Connection $BlueCatSession -id $viewObj.id
+                $viewObj   = Trace-BlueCatRoot -Object $newObj -Type View -BlueCatSession $BlueCatSession
+                $configObj = $viewObj.config
             }
 
-            if ($configObj) { $newObj | Add-Member -MemberType NoteProperty -Name config -Value $($configObj) }
             if ($viewObj)   { $newObj | Add-Member -MemberType NoteProperty -Name view   -Value $($viewObj)   }
+            if ($configObj) { $newObj | Add-Member -MemberType NoteProperty -Name config -Value $($configObj) }
         }
 
         # Return the converted reply
