@@ -7,7 +7,7 @@
 
     This cmdlet takes the 'Request' parameter and applies it to the path "https://$SERVER/Services/REST/v1/" and can accept Get, Post, and Put calls currently.
 .PARAMETER Method
-    A string value representing REST method, currently 'Get', 'Post', or 'Put'.
+    A string value representing REST method, currently 'Get', 'Post', 'Put', or 'Delete'.
 .PARAMETER Request
     A string value representing the API call attached to the v1 REST API.
 .PARAMETER Body
@@ -30,7 +30,7 @@
     [CmdletBinding()]
 
     param(
-        [ValidateSet('Get','Post','Put')]
+        [ValidateSet('Get','Post','Put','Delete')]
         [string] $Method = 'Get',
 
         [Parameter(Mandatory, ValueFromPipeline)]
