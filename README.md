@@ -84,6 +84,17 @@ Get-BlueCatView -All
 Get-BlueCatView -All -EveryConfig
 ```
 
+## Roadmap
+
+1. Implement Update-* functions for DNS related records
+2. Implement Delete-* functions
+3. Implement IP4 Address related functions
+
+Features Under Consideration:
+* Integrate ARIN lookups for IP4 block/network creation/updates
+* IP6 Address related functions
+* Add support for BlueCat APIv2
+
 ## Support
 
 Its mostly just me, but I do have a small team that assists me with the support of tools and libraries that I can tap if the work is useful in our environment. Please feel free to log issues/bugs and feature requests. Code contributions are welcome as well. I'll respond as quickly as time permits.
