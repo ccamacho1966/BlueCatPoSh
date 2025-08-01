@@ -1,4 +1,13 @@
-# BlueCatPoSh - BlueCat IPAM PowerShell Library
+<table>
+  <tr>
+    <td>
+      <img height=100 src="images/BlueCatPoSh.png">
+    </td>
+    <td>
+      <h1>BlueCatPoSh - BlueCat IPAM PowerShell Library</h1>
+    </td>
+  </tr>
+</table>
 
 Leveraging the BlueCat IPAM API has generally been complex in our environment so I have been experimenting with a library to standardize and simplify access. BlueCatPoSh is the 3rd generation of my local library implementation for PowerShell and I'm working to clean it up and make it useful to a larger audience.
 
