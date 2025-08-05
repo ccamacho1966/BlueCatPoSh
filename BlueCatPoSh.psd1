@@ -82,7 +82,9 @@ FunctionsToExport = @('Add-BlueCatAlias', 'Add-BlueCatDNSDeploymentRole',
     'Get-BlueCatIP4Blocks', 'Get-BlueCatIP4Networks', 'Get-BlueCatIPContainerByIP',
     'Get-BlueCatMX', 'Get-BlueCatParent', 'Get-BlueCatServer',
     'Get-BlueCatSRV', 'Get-BlueCatView', 'Get-BlueCatZone',
-    'Invoke-BlueCatApi', 'Resolve-BlueCatFQDN',
+    'Invoke-BlueCatApi',
+    'Remove-BlueCatHost',
+    'Resolve-BlueCatFQDN',
     'Set-BlueCatConfig', 'Set-BlueCatConnection', 'Set-BlueCatView',
     'Trace-BlueCatRoot')
 
