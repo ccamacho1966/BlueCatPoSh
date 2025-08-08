@@ -178,7 +178,7 @@ function Resolve-BlueCatFQDN {
         # Search for an external host record matching the requested FQDN
         try {
             Write-Verbose "$($thisFN): Searching for External Host records..."
-            $xhObj = Get-BlueCatExternalHost -BlueCatSession $BlueCatSession -Name $FQDNobj.name 4>$null
+            $xhObj = Get-BlueCatExternalHost -Name $FQDNobj.name -View $View -BlueCatSession $BlueCatSession
             if ($xhObj) {
                 Write-Verbose "$($thisFN): Selected External Host #$($xhObj.id) as '$($xhObj.name)'"
             }
