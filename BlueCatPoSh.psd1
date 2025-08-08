@@ -12,7 +12,7 @@
 RootModule = 'BlueCatPoSh.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.0.0'
+ModuleVersion = '3.1.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -69,13 +69,13 @@ PowerShellVersion = '5.1'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Add-BlueCatAlias', 'Add-BlueCatDNSDeploymentRole',
-    'Add-BlueCatExternalHost', 'Add-BlueCatHost', 'Add-BlueCatIP4Block',
-    'Add-BlueCatIP4Network', 'Add-BlueCatMX',
-    'Add-BlueCatSRV', 'Add-BlueCatTXT', 'Add-BlueCatZone',
-    'Clear-BlueCatConfig', 'Clear-BlueCatView', 'Connect-BlueCat',
-    'Convert-BlueCatPropertyObject', 'Convert-BlueCatPropertyString',
-    'Convert-BlueCatReply', 'Disconnect-BlueCat',
+FunctionsToExport = @(
+    'Add-BlueCatAlias', 'Add-BlueCatDNSDeploymentRole', 'Add-BlueCatExternalHost',
+    'Add-BlueCatHost', 'Add-BlueCatIP4Block', 'Add-BlueCatIP4Network',
+    'Add-BlueCatMX', 'Add-BlueCatSRV', 'Add-BlueCatTXT', 'Add-BlueCatZone',
+    'Clear-BlueCatConfig', 'Clear-BlueCatView',
+    'Connect-BlueCat', 'Disconnect-BlueCat',
+    'Convert-BlueCatPropertyObject', 'Convert-BlueCatPropertyString', 'Convert-BlueCatReply',
     'Get-BlueCatAlias', 'Get-BlueCatConfig', 'Get-BlueCatConnection',
     'Get-BlueCatEntities', 'Get-BlueCatEntityById', 'Get-BlueCatEntityByName',
     'Get-BlueCatExternalHost', 'Get-BlueCatHost', 'Get-BlueCatIP4Addresses',
@@ -83,7 +83,7 @@ FunctionsToExport = @('Add-BlueCatAlias', 'Add-BlueCatDNSDeploymentRole',
     'Get-BlueCatMX', 'Get-BlueCatParent', 'Get-BlueCatServer',
     'Get-BlueCatSRV', 'Get-BlueCatView', 'Get-BlueCatZone',
     'Invoke-BlueCatApi',
-    'Remove-BlueCatHost',
+    'Remove-BlueCatEntityById', 'Remove-BlueCatAlias', 'Remove-BlueCatHost',
     'Resolve-BlueCatFQDN',
     'Set-BlueCatConfig', 'Set-BlueCatConnection', 'Set-BlueCatView',
     'Trace-BlueCatRoot')
@@ -95,7 +95,7 @@ CmdletsToExport = @()
 VariablesToExport = 'BlueCatSession'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @('Add-BlueCatCNAME', 'Get-BlueCatCNAME', 'Set-BlueCatDefaultConnection')
+AliasesToExport = @('Add-BlueCatCNAME', 'Get-BlueCatCNAME', 'Remove-BlueCatCNAME', 'Set-BlueCatDefaultConnection')
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()

@@ -93,8 +93,9 @@ foreach ($folder in $folderList) {
     }
 }
 
-New-Alias -Name Add-BlueCatCNAME -Value Add-BlueCatAlias
-New-Alias -Name Get-BlueCatCNAME -Value Get-BlueCatAlias
+New-Alias -Name Add-BlueCatCNAME             -Value Add-BlueCatAlias
+New-Alias -Name Get-BlueCatCNAME             -Value Get-BlueCatAlias
+New-Alias -Name Remove-BlueCatCNAME          -Value Remove-BlueCatAlias
 New-Alias -Name Set-BlueCatDefaultConnection -Value Set-BlueCatConnection
 Export-ModuleMember -Alias '*'
 
