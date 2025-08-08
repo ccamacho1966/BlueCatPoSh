@@ -92,14 +92,17 @@ function Remove-BlueCatHost {
             throw $FailureMessage
         }
 
-        $Query = "deleteWithOptions?objectID=$($Object.ID)&deleteOrphanedIPAddresses="
-        if ($DeleteOrphanIP) {
-            $Query += "true"
-        } else {
-            $Query += "false"
+        $DeleteOptions = @{
+            deleteOrphanedIPAddresses = ([bool] $DeleteOrphanIP)
+        }
+
+        $DeleteHost = @{
+            ID             = $Object.ID
+            Options        = $DeleteOptions
+            BlueCatSession = $BlueCatSession
         }
 
         Write-Verbose "$($thisFN): Deleting host record for '$($Object.Name)' (ID:$($Object.ID))"
-        Invoke-BlueCatApi -Method Delete -Request $Query -BlueCatSession $BlueCatSession | Out-Null
+        Remove-BlueCatEntityById @DeleteHost
     }
 }
