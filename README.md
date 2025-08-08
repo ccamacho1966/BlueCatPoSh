@@ -23,7 +23,9 @@ The library is known to work with BlueCat v9.4 and v9.6 at this time.
 
 ## Installation
 
-Manual installation at this time.
+``` powershell
+Install-Module -Name BlueCatPoSh
+```
 
 ## Usage
 
