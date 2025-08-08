@@ -84,7 +84,7 @@ FunctionsToExport = @(
     'Get-BlueCatSRV', 'Get-BlueCatView', 'Get-BlueCatZone',
     'Invoke-BlueCatApi',
     'Remove-BlueCatEntityById', 'Remove-BlueCatAlias', 'Remove-BlueCatHost',
-    'Resolve-BlueCatFQDN',
+    'Resolve-BlueCatFQDN', 'Resolve-BlueCatZone',
     'Set-BlueCatConfig', 'Set-BlueCatConnection', 'Set-BlueCatView',
     'Trace-BlueCatRoot')
 
