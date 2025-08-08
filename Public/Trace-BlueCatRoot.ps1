@@ -58,11 +58,16 @@ function Trace-BlueCatRoot {
     }
 
     process {
+        $thisFN = (Get-PSCallStack)[0].Command
+
         if ($Object) {
             if (-not $Object.id) {
                 throw "$($thisFN): Invalid object - Does not contain an Entity ID"
             }
             $ID = $Object.id
+            Write-Verbose "$($thisFN): Trace $($Type) for $($Object.type) $($Object.name)"
+        } else {
+            Write-Verbose "$($thisFN): Trace $($Type) for Entity ID:$($ID)"
         }
 
         do {
@@ -75,13 +80,15 @@ function Trace-BlueCatRoot {
                 $ID = $parent.id
             }
         } while ($parent.type -ne $Type)
-    
-    
+        
         $newObj = New-Object -TypeName PSCustomObject
-        $newObj | Add-Member -MemberType NoteProperty -Name 'id'     -Value $parent.id
-        $newObj | Add-Member -MemberType NoteProperty -Name 'name'   -Value $parent.name
-        $newObj | Add-Member -MemberType NoteProperty -Name 'type'   -Value $parent.type
+        $newObj | Add-Member -MemberType NoteProperty -Name 'id'   -Value $parent.id
+        $newObj | Add-Member -MemberType NoteProperty -Name 'name' -Value $parent.name
+        $newObj | Add-Member -MemberType NoteProperty -Name 'type' -Value $parent.type
+        Write-Verbose "$($thisFN): Found $($Type) $($newObj | ConvertTo-Json -Depth 9 -Compress)"
+
         if ($parent.type -eq 'View') {
+            # Add the Configuration to a View object
             $newObj | Add-Member -MemberType NoteProperty -Name 'config' -Value (Get-BlueCatParent -id ($parent.id) -BlueCatSession $BlueCatSession)
         }
 
