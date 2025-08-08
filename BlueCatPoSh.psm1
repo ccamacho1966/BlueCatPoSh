@@ -8,7 +8,7 @@ BlueCat API class library and supporting functions.
 Author: Christopher Camacho
 #>
 
-$Script:ModuleVersion = '3.0.0'
+$Script:ModuleVersion = '3.1.0'
 
 <#
 [using module] doesn't consistently import classes or enumerations defined in
@@ -107,6 +107,3 @@ Export-ModuleMember -Alias '*'
 # The default BlueCat session in use
 [BlueCat]$Script:BlueCatSession = $null
 Export-ModuleMember -Variable BlueCatSession
-
-# Read in or create an initial config file and variable
-
