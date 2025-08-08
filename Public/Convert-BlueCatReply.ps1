@@ -106,6 +106,24 @@
                 $configObj = $viewObj.config
             }
 
+            if ($newObj.type -eq 'MXRecord') {
+                # Directly expose MX properties
+                $newObj | Add-Member -MemberType NoteProperty -Name relay      -Value $newObj.property.linkedRecordName
+                $newObj | Add-Member -MemberType NoteProperty -Name priority   -Value $newObj.property.priority
+            } elseif ($newObj.type -eq 'SRVRecord') {
+                # Directly expose SRV properties
+                $newObj | Add-Member -MemberType NoteProperty -Name target     -Value $newObj.property.linkedRecordName
+                $newObj | Add-Member -MemberType NoteProperty -Name port       -Value $newObj.property.port
+                $newObj | Add-Member -MemberType NoteProperty -Name priority   -Value $newObj.property.priority
+                $newObj | Add-Member -MemberType NoteProperty -Name weight     -Value $newObj.property.weight
+            } elseif ($newObj.type -eq 'Zone') {
+                # Directly expose Zone deployable flag
+                $newObj | Add-Member -MemberType NoteProperty -Name deployable -Value $newObj.property.deployable
+            } elseif ($newObj.type -eq 'AliasRecord') {
+                # Directly expose alias target
+                $newObj | Add-Member -MemberType NoteProperty -Name target     -Value $newObj.property.linkedRecordName
+            }
+
             if ($viewObj)   { $newObj | Add-Member -MemberType NoteProperty -Name view   -Value $($viewObj)   }
             if ($configObj) { $newObj | Add-Member -MemberType NoteProperty -Name config -Value $($configObj) }
         }
