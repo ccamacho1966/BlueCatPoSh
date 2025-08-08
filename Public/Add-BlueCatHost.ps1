@@ -85,24 +85,23 @@
         $thisFN = (Get-PSCallStack)[0].Command
 
         $NewHost = $Name | Test-ValidFQDN
+
+        if (-not $View) {
+            # View object was not passed to the function
+            if ($ViewID) {
+                # Lookup View directly by Entity ID
+                $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+            } else {
+                # Use session defaults to resolve View
+                $BlueCatSession | Confirm-Settings -View
+                $View = $BlueCatSession.View
+            }
+        }
+
         $LookupParms = @{
             Name           = $NewHost
+            View           = $View
             BlueCatSession = $BlueCatSession
-        }
-
-        if ($ViewID) {
-            $LookupParms.ViewID = $ViewID
-            $ConfigID           = Get-BlueCatParent -ID $ViewID -BlueCatSession $BlueCatSession
-        } elseif ($View)   {
-            $LookupParms.View   = $View
-            $ViewID             = $View.ID
-            $ConfigID           = $View.config.id
-        }
-
-        if (-not $ConfigID) {
-            if ($BlueCatSession.Config) {
-                $ConfigID       = $BlueCatSession.Config.id
-            }
         }
 
         $HostInfo = Resolve-BlueCatFQDN @LookupParms
@@ -124,7 +123,7 @@
 
         $ipList = $null
         $LookupIP4Network = @{
-            Parent         = $ConfigID
+            Parent         = $View.config
             Type           = 'IP4Network'
             BlueCatSession = $BlueCatSession
         }
