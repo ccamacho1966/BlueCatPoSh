@@ -99,7 +99,7 @@ Function Get-BlueCatSRV {
 
         # Use the resolved zone info to build a new query and retrieve the SRV record(s)
         $Query = "getEntitiesByName?parentId=$($Resolved.zone.id)&type=SRVRecord&start=0&count=100&name=$($Resolved.shortName)"
-        [PSCustomObject[]] $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
         if ($BlueCatReply.Count) {
             [PSCustomObject[]] $SRVList = @()
