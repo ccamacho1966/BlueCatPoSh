@@ -63,8 +63,7 @@ function Remove-BlueCatSRV {
                 $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
             }
 
-            [PSCustomObject[]] $BlueCatReply = @()
-            $BlueCatReply += Get-BlueCatSRV -Name $Name -View $View -BlueCatSession $BlueCatSession
+            $BlueCatReply = Get-BlueCatSRV -Name $Name -View $View -BlueCatSession $BlueCatSession
 
             if ($BlueCatReply.Count -eq 1) {
                 # Only 1 record so update $Object and continue
