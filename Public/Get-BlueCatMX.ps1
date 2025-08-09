@@ -27,16 +27,14 @@ Function Get-BlueCatMX {
 .INPUTS
     None
 .OUTPUTS
-    PSCustomObject representing the requested set of MX records, or NULL if not found.
+    PSCustomObject array representing the requested set of MX records, or NULL if none are found.
 
     [int] id
     [string] name
     [string] shortName
-    [string] type = 'MXList'
-    [PSCustomObject[]] MXList
-        [int] id
-        [int] priority
-        [string] relay
+    [string] type = 'MXRecord'
+    [string] relay
+    [int] priority
     [PSCustomObject] config
     [PSCustomObject] view
     [PSCustomObject] zone
@@ -102,32 +100,17 @@ Function Get-BlueCatMX {
         [PSCustomObject[]] $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
         if ($BlueCatReply.Count) {
-            # Loop through the results and build an object
             [PSCustomObject[]] $MXList = @()
-            foreach ($entry in $BlueCatReply) {
-                $MXentry = $entry | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-                $MXrecord = @{
-                    id       = $MXentry.id
-                    relay    = $MXentry.property.linkedRecordName
-                    priority = $MXentry.property.priority
-                }
-                if ($MXentry.property.ttl) {
-                    $MXrecord.ttl = $MXentry.property.ttl
-                }
-                Write-Verbose "$($thisFN): Selected MX #$($MXrecord.id) for $($FQDN) ($($MXrecord.relay) Priority $($MXentry.property.priority)) for $($MXentry.name)"
-                $MXList += $MXrecord
-            }
-            $MXobj = New-Object -TypeName PSCustomObject
-            $MXobj | Add-Member -MemberType NoteProperty -Name name      -Value $FQDN
-            $MXobj | Add-Member -MemberType NoteProperty -Name type      -Value 'MXList'
-            $MXobj | Add-Member -MemberType NoteProperty -Name MXList    -Value $MXList
-            $MXobj | Add-Member -MemberType NoteProperty -Name shortName -Value $Resolved.shortName
-            $MXobj | Add-Member -MemberType NoteProperty -Name zone      -Value $Resolved.zone
-            $MXobj | Add-Member -MemberType NoteProperty -Name config    -Value $Resolved.config
-            $MXobj | Add-Member -MemberType NoteProperty -Name view      -Value $Resolved.view
 
-            # Return the MX object to caller
-            $MXobj
+            # Loop through the results and build an array of objects
+            foreach ($entry in $BlueCatReply) {
+                $MXRecord = $entry | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+                $MXList  += $MXRecord
+                Write-Verbose "$($thisFN): Selected MX #$($MXrecord.id) for $($FQDN) ($($MXrecord.relay) Priority $($MXentry.priority)) for $($MXentry.name)"
+            }
+
+            # Return the MX array to caller
+            $MXList
         }
     }
 }

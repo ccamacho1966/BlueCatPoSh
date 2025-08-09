@@ -27,18 +27,16 @@ Function Get-BlueCatSRV {
 .INPUTS
     None
 .OUTPUTS
-    PSCustomObject representing the requested set of SRV records, or NULL if not found.
+    PSCustomObject array representing the requested set of SRV records, or NULL if none are found.
 
     [int] id
     [string] name
     [string] shortName
-    [string] type = 'SRVList'
-    [PSCustomObject[]] SRVList
-        [int] id
-        [string] target
-        [int] port
-        [int] priority
-        [int] weight
+    [string] type = 'SRVRecord'
+    [string] target
+    [int] port
+    [int] priority
+    [int] weight
     [PSCustomObject] config
     [PSCustomObject] view
     [PSCustomObject] zone
@@ -104,34 +102,17 @@ Function Get-BlueCatSRV {
         [PSCustomObject[]] $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
         if ($BlueCatReply.Count) {
-            # Loop through the results and build an object
             [PSCustomObject[]] $SRVList = @()
-            foreach ($entry in $BlueCatReply) {
-                $SRVentry  = $entry | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-                $SRVrecord = @{
-                    id       = $SRVentry.id
-                    target   = $SRVentry.property.linkedRecordName
-                    port     = $SRVentry.property.port
-                    priority = $SRVentry.property.priority
-                    weight   = $SRVentry.property.weight
-                }
-                if ($SRVentry.property.ttl) {
-                    $SRVrecord.ttl = $SRVentry.property.ttl
-                }
-                Write-Verbose "$($thisFN): SRV ID:$($SRVrecord.id) for $($FQDN) links to $($SRVrecord.target):$($SRVrecord.port) (Priority=$($SRVrecord.priority), Weight=$($SRVrecord.weight))"
-                $SRVList += [PSCustomObject] $SRVrecord
-            }
-            $SRVobj = New-Object -TypeName PSCustomObject
-            $SRVobj | Add-Member -MemberType NoteProperty -Name name      -Value $FQDN
-            $SRVobj | Add-Member -MemberType NoteProperty -Name type      -Value 'SRVList'
-            $SRVobj | Add-Member -MemberType NoteProperty -Name SRVList   -Value $SRVList
-            $SRVobj | Add-Member -MemberType NoteProperty -Name shortName -Value $Resolved.shortName
-            $SRVobj | Add-Member -MemberType NoteProperty -Name zone      -Value $Resolved.zone
-            $SRVobj | Add-Member -MemberType NoteProperty -Name config    -Value $Resolved.config
-            $SRVobj | Add-Member -MemberType NoteProperty -Name view      -Value $Resolved.view
 
-            # Return the SRV object to caller
-            $SRVobj
+            # Loop through the results and build an object
+            foreach ($entry in $BlueCatReply) {
+                $SRVRecord = $entry | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+                $SRVList  += $SRVrecord
+                Write-Verbose "$($thisFN): SRV ID:$($SRVrecord.id) for $($FQDN) links to $($SRVrecord.target):$($SRVrecord.port) (Priority=$($SRVrecord.priority), Weight=$($SRVrecord.weight))"
+            }
+
+            # Return the SRV array to caller
+            $SRVList
         }
     }
 }
