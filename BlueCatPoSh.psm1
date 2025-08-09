@@ -85,7 +85,6 @@ foreach ($folder in $folderList) {
             Write-Verbose "Imported $($folder) file $($import.FullName)"
             if ($folder -eq 'Public') {
                 Export-ModuleMember -Function $import.BaseName
-                Write-Verbose "Exported public function $($import.BaseName)"
             }
         } catch {
             Write-Error -Message "Failed to import $($folder) file $($import.BaseName): $_"
