@@ -36,10 +36,10 @@ function Remove-BlueCatEntityById {
             $DeleteObject.Request = "deleteWithOptions?objectId=$($ID)"
 
             #Process Options hashtable
-            foreach ($item in $Options) {
+            foreach ($item in $Options.GetEnumerator()) {
                 $thisKey = $item.key
 
-                if ($item.Value.GetType() -eq 'Boolean') {
+                if ($item.Value.GetType().Name -eq 'Boolean') {
                     $thisValue = $item.Value.toString().toLower()
                 } else {
                     $thisValue = $item.Value
