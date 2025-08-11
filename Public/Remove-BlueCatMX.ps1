@@ -1,4 +1,52 @@
 function Remove-BlueCatMX {
+<#
+.SYNOPSIS
+    Remove one of more MX records
+.DESCRIPTION
+    The Remove-BlueCatMX cmdlet allows the removal of DNS MX records.
+.PARAMETER Name
+    A string value representing the FQDN of the MX records to be removed.
+
+    NOTE: This will remove ALL MX records for the named FQDN.
+.PARAMETER ID
+    An integer value representing the entity ID of the MX record to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the MX record to be removed.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatMX -Name server1.example.com
+
+    Removes all MX records for 'server1.example.com' or throws an error if none are found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Remove-BlueCatMX -Name server9.example.com -ViewID 23456 -BlueCatSession $Session3
+
+    Removes all MX records for 'server9.example.com' or throws an error if none are found.
+    Use the BlueCatSession associated with $Session3 to perform this operation.
+    The record will be searched for in view 23456.
+.EXAMPLE
+    PS> Remove-BlueCatMX -ID 10129
+
+    Removes the MX record with entity ID 10129 or throws an error if the MX record is not found.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity ID.
+.EXAMPLE
+    PS> $MXObject | Remove-BlueCatMX
+
+    Removes the MX record represented by $MXObject which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity information.
+.INPUTS
+    PSCustomObject representing the MX record to be removed.
+.OUTPUTS
+    None
+#>
     [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(

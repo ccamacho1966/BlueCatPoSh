@@ -1,4 +1,52 @@
 function Remove-BlueCatSRV {
+<#
+.SYNOPSIS
+    Remove one of more SRV records
+.DESCRIPTION
+    The Remove-BlueCatSRV cmdlet allows the removal of DNS SRV records.
+.PARAMETER Name
+    A string value representing the FQDN of the SRV records to be removed.
+
+    NOTE: This will remove ALL SRV records for the named FQDN.
+.PARAMETER ID
+    An integer value representing the entity ID of the SRV record to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the SRV record to be removed.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatSRV -Name server1.example.com
+
+    Removes all SRV records for 'server1.example.com' or throws an error if none are found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Remove-BlueCatSRV -Name server9.example.com -ViewID 23456 -BlueCatSession $Session3
+
+    Removes all SRV records for 'server9.example.com' or throws an error if none are found.
+    Use the BlueCatSession associated with $Session3 to perform this operation.
+    The record will be searched for in view 23456.
+.EXAMPLE
+    PS> Remove-BlueCatSRV -ID 10129
+
+    Removes the SRV record with entity ID 10129 or throws an error if the SRV record is not found.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity ID.
+.EXAMPLE
+    PS> $SRVObject | Remove-BlueCatSRV
+
+    Removes the SRV record represented by $SRVObject which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity information.
+.INPUTS
+    PSCustomObject representing the SRV record to be removed.
+.OUTPUTS
+    None
+#>
     [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(

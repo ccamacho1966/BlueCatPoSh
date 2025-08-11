@@ -1,8 +1,37 @@
 function Remove-BlueCatEntityById {
+<#
+.SYNOPSIS
+    Remove any BlueCat Entity
+.DESCRIPTION
+    The Remove-BlueCatEntityById cmdlet allows the removal of any BlueCat entity.
+
+    No sanity checking is performed by the library when deleting objects by Entity ID.
+.PARAMETER ID
+    An integer value representing the ID of the entity to be removed.
+.PARAMETER Options
+    A hashtable representing options to be passed directly to the BlueCat API.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this operation.
+.EXAMPLE
+    PS> Remove-BlueCatEntityById -ID 10182
+
+    Removes the entity with ID 10182 or throws an error if the entity is not found.
+    BlueCatSession will default to the current default session.
+.EXAMPLE
+    PS> Remove-BlueCatEntityById -ID 10222 -Options @{ 'deleteOrphanedIPAddresses'=$true }
+
+    Removes the entity with ID 10222 or throws an error if the entity is not found.
+    API call will be made with "?deleteOrphanedIPAddresses=true" appended to the Uri.
+    BlueCatSession will default to the current default session.
+.INPUTS
+    None
+.OUTPUTS
+    None
+#>
     [CmdletBinding()]
 
     param(
-        [parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [Alias('EntityID')]
         [ValidateRange(1, [int]::MaxValue)]
         [int] $ID,

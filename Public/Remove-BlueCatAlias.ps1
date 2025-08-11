@@ -1,4 +1,52 @@
 function Remove-BlueCatAlias {
+<#
+.SYNOPSIS
+    Remove an Alias (CNAME)
+.DESCRIPTION
+    The Remove-BlueCatAlias cmdlet allows the removal of DNS CNAME records.
+
+    A Canonical Name (CNAME) record is a type of resource record in the Domain Name System (DNS) that maps one domain name (an alias) to another (the canonical name).
+.PARAMETER Name
+    A string value representing the FQDN of the CNAME (Alias) to be removed.
+.PARAMETER ID
+    An integer value representing the entity ID of the alias to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the alias to be removed.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatAlias -Name myalias.example.com
+
+    Removes the alias 'myalias.example.com' or throws an error if the alias is not found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Remove-BlueCatAlias -Name myservice.example.com -ViewID 23456 -BlueCatSession $Session6
+
+    Removes the alias 'myservice.example.com' or throws an error if the alias is not found.
+    Use the BlueCatSession associated with $Session6 to perform this operation.
+    The record will be searched for in view 23456.
+.EXAMPLE
+    PS> Remove-BlueCatAlias -ID 10102
+
+    Removes the alias with entity ID 10102 or throws an error if the alias is not found.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity ID.
+.EXAMPLE
+    PS> $AliasObject | Remove-BlueCatAlias
+
+    Removes the alias represented by $AliasObject which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity information.
+.INPUTS
+    PSCustomObject representing the alias to be removed.
+.OUTPUTS
+    None
+#>
     [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(

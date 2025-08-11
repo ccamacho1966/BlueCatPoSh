@@ -1,4 +1,52 @@
 function Remove-BlueCatHost {
+<#
+.SYNOPSIS
+    Remove a Host record (A/AAAA)
+.DESCRIPTION
+    The Remove-BlueCatHost cmdlet allows the removal of DNS A and AAAA records.
+.PARAMETER Name
+    A string value representing the FQDN of the DNS Host to be removed.
+.PARAMETER ID
+    An integer value representing the entity ID of the DNS Host to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the DNS Host to be removed.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER DeleteOrphanIP
+    A switch that caused any orphaned IP entries associated with the host to be deleted as well.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatHost -Name server1.example.com
+
+    Removes the host 'server1.example.com' or throws an error if the host is not found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Remove-BlueCatHost -Name server9.example.com -ViewID 23456 -BlueCatSession $Session3
+
+    Removes the host 'server9.example.com' or throws an error if the host is not found.
+    Use the BlueCatSession associated with $Session3 to perform this operation.
+    The record will be searched for in view 23456.
+.EXAMPLE
+    PS> Remove-BlueCatHost -ID 10109
+
+    Removes the host with entity ID 10109 or throws an error if the host is not found.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity ID.
+.EXAMPLE
+    PS> $HostObject | Remove-BlueCatHost
+
+    Removes the host represented by $HostObject which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity information.
+.INPUTS
+    PSCustomObject representing the host to be removed.
+.OUTPUTS
+    None
+#>
     [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(

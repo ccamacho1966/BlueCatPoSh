@@ -1,4 +1,50 @@
 function Remove-BlueCatExternalHost {
+<#
+.SYNOPSIS
+    Remove an External Host record
+.DESCRIPTION
+    The Remove-BlueCatExternalHost cmdlet allows the removal of external host records.
+.PARAMETER Name
+    A string value representing the FQDN of the External Host to be removed.
+.PARAMETER ID
+    An integer value representing the entity ID of the External Host to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the External Host to be removed.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatExternalHost -Name 'autodiscover.outlook.com'
+
+    Removes the external host 'autodiscover.outlook.com' or throws an error if the external host is not found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Remove-BlueCatExternalHost -Name 'sendgrid.net' -ViewID 23456 -BlueCatSession $Session3
+
+    Removes the external host 'sendgrid.net' or throws an error if the external host is not found.
+    Use the BlueCatSession associated with $Session3 to perform this operation.
+    The record will be searched for in view 23456.
+.EXAMPLE
+    PS> Remove-BlueCatExternalHost -ID 10909
+
+    Removes the external host with entity ID 10909 or throws an error if the external host is not found.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity ID.
+.EXAMPLE
+    PS> $ExternalHost | Remove-BlueCatExternalHost
+
+    Removes the external host represented by $ExternalHost which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity information.
+.INPUTS
+    PSCustomObject representing the external host to be removed.
+.OUTPUTS
+    None
+#>
     [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(

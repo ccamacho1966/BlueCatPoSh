@@ -1,4 +1,50 @@
 function Remove-BlueCatZone {
+<#
+.SYNOPSIS
+    Remove a DNS Zone definition
+.DESCRIPTION
+    The Remove-BlueCatZone cmdlet allows the removal of DNS Zone definitions.
+.PARAMETER Name
+    A string value representing the FQDN of the DNS Zone to be removed.
+.PARAMETER ID
+    An integer value representing the entity ID of the DNS Zone to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the DNS Zone to be removed.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatZone -Name example.com
+
+    Removes the zone 'example.com' or throws an error if the zone is not found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Remove-BlueCatZone -Name anotherzone.com -ViewID 23456 -BlueCatSession $Session3
+
+    Removes the zone 'anotherzone.com' or throws an error if the zone is not found.
+    Use the BlueCatSession associated with $Session3 to perform this operation.
+    The record will be searched for in view 23456.
+.EXAMPLE
+    PS> Remove-BlueCatZone -ID 10007
+
+    Removes the zone with entity ID 10007 or throws an error if the zone is not found.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity ID.
+.EXAMPLE
+    PS> $ZoneObject | Remove-BlueCatZone
+
+    Removes the zone represented by $ZoneObject which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity information.
+.INPUTS
+    PSCustomObject representing the zone to be removed.
+.OUTPUTS
+    None
+#>
     [CmdletBinding(DefaultParameterSetName='byNameViewID')]
 
     param(

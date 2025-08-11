@@ -1,4 +1,52 @@
 function Remove-BlueCatTXT {
+<#
+.SYNOPSIS
+    Remove one of more TXT records
+.DESCRIPTION
+    The Remove-BlueCatTXT cmdlet allows the removal of DNS TXT records.
+.PARAMETER Name
+    A string value representing the FQDN of the TXT records to be removed.
+
+    NOTE: This will remove ALL TXT records for the named FQDN.
+.PARAMETER ID
+    An integer value representing the entity ID of the TXT record to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the TXT record to be removed.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatTXT -Name server1.example.com
+
+    Removes all TXT records for 'server1.example.com' or throws an error if none are found.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Remove-BlueCatTXT -Name server9.example.com -ViewID 23456 -BlueCatSession $Session3
+
+    Removes all TXT records for 'server9.example.com' or throws an error if none are found.
+    Use the BlueCatSession associated with $Session3 to perform this operation.
+    The record will be searched for in view 23456.
+.EXAMPLE
+    PS> Remove-BlueCatTXT -ID 10129
+
+    Removes the TXT record with entity ID 10129 or throws an error if the TXT record is not found.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity ID.
+.EXAMPLE
+    PS> $TXTObject | Remove-BlueCatTXT
+
+    Removes the TXT record represented by $TXTObject which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+    View will be automatically selected based on the entity information.
+.INPUTS
+    PSCustomObject representing the TXT record to be removed.
+.OUTPUTS
+    None
+#>
     [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(
