@@ -47,20 +47,28 @@ function Remove-BlueCatExternalHost {
         if ($Name) {
             # Convert the Name into an Entity Object to use the object logic
 
-            if ($View) {
-                if (-not $View.ID) {
-                    $FailureMessage = "$($thisFN): Invalid View Object"
-                    Write-Verbose $FailureMessage
-                    throw $FailureMessage
-                }
-
-                if ($View.type -ne 'View') {
-                    $FailureMessage = "$($thisFN): Not a View - $($View.Name) is type '$($View.type)'"
-                    Write-Verbose $FailureMessage
-                    throw $FailureMessage
-                }
-            } else {
+            if ($ViewID) {
+                # Convert the ViewID into a View Object
                 $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+            } elseif (-not $View) {
+                # No View ID or Object - Attempt to use the default view
+                $BlueCatSession | Confirm-Settings -View
+                $View = $BlueCatSession.view
+                Write-Verbose "$($thisFN): Using default view '$($View.name)' (ID:$($View.id))"
+            }
+
+            # Validate the View Object
+            if (-not $View.ID) {
+                $FailureMessage = "$($thisFN): Invalid View Object"
+                Write-Verbose $FailureMessage
+                throw $FailureMessage
+            }
+
+            # Validate the View Object is the correct Entity Type
+            if ($View.type -ne 'View') {
+                $FailureMessage = "$($thisFN): Not a View - $($View.Name) is type '$($View.type)'"
+                Write-Verbose $FailureMessage
+                throw $FailureMessage
             }
 
             $Object = Get-BlueCatExternalHost -Name $Name -View $View -BlueCatSession $BlueCatSession
