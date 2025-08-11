@@ -18,7 +18,7 @@ function Remove-BlueCatExternalHost {
         [Alias('ExternalHostName')]
         [string] $Name,
 
-        [Parameter(ParameterSetName='byNameViewID',Mandatory)]
+        [Parameter(ParameterSetName='byNameViewID')]
         [ValidateRange(1, [int]::MaxValue)]
         [int] $ViewID,
 
