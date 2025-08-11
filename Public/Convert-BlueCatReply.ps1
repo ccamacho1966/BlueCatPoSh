@@ -116,6 +116,8 @@
                 $newObj | Add-Member -MemberType NoteProperty -Name port       -Value $newObj.property.port
                 $newObj | Add-Member -MemberType NoteProperty -Name priority   -Value $newObj.property.priority
                 $newObj | Add-Member -MemberType NoteProperty -Name weight     -Value $newObj.property.weight
+            } elseif ($newObj.type -eq 'TXTRecord') {
+                $newObj | Add-Member -MemberType NoteProperty -Name text       -Value $newObj.property.txt
             } elseif ($newObj.type -eq 'Zone') {
                 # Directly expose Zone deployable flag
                 $newObj | Add-Member -MemberType NoteProperty -Name deployable -Value $newObj.property.deployable
