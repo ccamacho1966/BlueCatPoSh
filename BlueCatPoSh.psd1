@@ -12,7 +12,7 @@
 RootModule = 'BlueCatPoSh.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.0.1'
+ModuleVersion = '3.1.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -69,20 +69,25 @@ PowerShellVersion = '5.1'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Add-BlueCatAlias', 'Add-BlueCatDNSDeploymentRole',
-    'Add-BlueCatExternalHost', 'Add-BlueCatHost', 'Add-BlueCatIP4Block',
-    'Add-BlueCatIP4Network', 'Add-BlueCatMX',
-    'Add-BlueCatSRV', 'Add-BlueCatTXT', 'Add-BlueCatZone',
-    'Clear-BlueCatConfig', 'Clear-BlueCatView', 'Connect-BlueCat',
-    'Convert-BlueCatPropertyObject', 'Convert-BlueCatPropertyString',
-    'Convert-BlueCatReply', 'Disconnect-BlueCat',
-    'Get-BlueCatAlias', 'Get-BlueCatConfig', 'Get-BlueCatConnection',
+FunctionsToExport = @(
+    'Add-BlueCatDNSDeploymentRole',
+    'Add-BlueCatIP4Block', 'Add-BlueCatIP4Network',
+    'Add-BlueCatAlias', 'Add-BlueCatExternalHost', 'Add-BlueCatHost',
+    'Add-BlueCatMX', 'Add-BlueCatSRV', 'Add-BlueCatTXT', 'Add-BlueCatZone',
+    'Clear-BlueCatConfig', 'Clear-BlueCatView',
+    'Connect-BlueCat', 'Disconnect-BlueCat',
+    'Convert-BlueCatPropertyObject', 'Convert-BlueCatPropertyString', 'Convert-BlueCatReply',
+    'Get-BlueCatConfig', 'Get-BlueCatView', 'Get-BlueCatConnection',
     'Get-BlueCatEntities', 'Get-BlueCatEntityById', 'Get-BlueCatEntityByName',
-    'Get-BlueCatExternalHost', 'Get-BlueCatHost', 'Get-BlueCatIP4Addresses',
-    'Get-BlueCatIP4Blocks', 'Get-BlueCatIP4Networks', 'Get-BlueCatIPContainerByIP',
-    'Get-BlueCatMX', 'Get-BlueCatParent', 'Get-BlueCatServer',
-    'Get-BlueCatSRV', 'Get-BlueCatView', 'Get-BlueCatZone',
-    'Invoke-BlueCatApi', 'Resolve-BlueCatFQDN',
+    'Get-BlueCatParent', 'Get-BlueCatServer',
+    'Get-BlueCatIP4Addresses', 'Get-BlueCatIP4Blocks', 'Get-BlueCatIP4Networks', 'Get-BlueCatIPContainerByIP',
+    'Get-BlueCatAlias', 'Get-BlueCatExternalHost', 'Get-BlueCatHost',
+    'Get-BlueCatMX', 'Get-BlueCatSRV', 'Get-BlueCatTXT', 'Get-BlueCatZone',
+    'Invoke-BlueCatApi',
+    'Remove-BlueCatEntityById', 'Remove-BlueCatIP4Block', 'Remove-BlueCatIP4Network',
+    'Remove-BlueCatAlias', 'Remove-BlueCatExternalHost', 'Remove-BlueCatHost',
+    'Remove-BlueCatMX', 'Remove-BlueCatSRV', 'Remove-BlueCatTXT', 'Remove-BlueCatZone',
+    'Resolve-BlueCatFQDN', 'Resolve-BlueCatZone',
     'Set-BlueCatConfig', 'Set-BlueCatConnection', 'Set-BlueCatView',
     'Trace-BlueCatRoot')
 
@@ -93,7 +98,7 @@ CmdletsToExport = @()
 VariablesToExport = 'BlueCatSession'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @('Add-BlueCatCNAME', 'Get-BlueCatCNAME', 'Set-BlueCatDefaultConnection')
+AliasesToExport = @('Add-BlueCatCNAME', 'Get-BlueCatCNAME', 'Remove-BlueCatCNAME', 'Set-BlueCatDefaultConnection')
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()

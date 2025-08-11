@@ -8,7 +8,7 @@ BlueCat API class library and supporting functions.
 Author: Christopher Camacho
 #>
 
-$Script:ModuleVersion = '3.0.1'
+$Script:ModuleVersion = '3.1.0'
 
 <#
 [using module] doesn't consistently import classes or enumerations defined in
@@ -85,7 +85,6 @@ foreach ($folder in $folderList) {
             Write-Verbose "Imported $($folder) file $($import.FullName)"
             if ($folder -eq 'Public') {
                 Export-ModuleMember -Function $import.BaseName
-                Write-Verbose "Exported public function $($import.BaseName)"
             }
         } catch {
             Write-Error -Message "Failed to import $($folder) file $($import.BaseName): $_"
@@ -93,8 +92,9 @@ foreach ($folder in $folderList) {
     }
 }
 
-New-Alias -Name Add-BlueCatCNAME -Value Add-BlueCatAlias
-New-Alias -Name Get-BlueCatCNAME -Value Get-BlueCatAlias
+New-Alias -Name Add-BlueCatCNAME             -Value Add-BlueCatAlias
+New-Alias -Name Get-BlueCatCNAME             -Value Get-BlueCatAlias
+New-Alias -Name Remove-BlueCatCNAME          -Value Remove-BlueCatAlias
 New-Alias -Name Set-BlueCatDefaultConnection -Value Set-BlueCatConnection
 Export-ModuleMember -Alias '*'
 
@@ -107,6 +107,3 @@ Export-ModuleMember -Alias '*'
 # The default BlueCat session in use
 [BlueCat]$Script:BlueCatSession = $null
 Export-ModuleMember -Variable BlueCatSession
-
-# Read in or create an initial config file and variable
-

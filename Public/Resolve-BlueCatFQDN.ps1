@@ -97,109 +97,56 @@ function Resolve-BlueCatFQDN {
             $View = Get-BlueCatView -ID $ViewID -BlueCatSession $BlueCatSession
         }
 
-        # Set the starting point for the zone/FQDN search to the View
-        $zId = $ViewID
+        $Zone = Resolve-BlueCatZone -Name $FQDN -View $View -BlueCatSession $BlueCatSession
 
-        $zPath = $FQDN.Split('\.')
-        [array]::Reverse($zPath)
-
-        $zDig = $true
-        $result = $null
-        $notZone = $null
-        foreach ($bit in $zPath) {
-            if ($zDig) {
-                Write-Verbose "$($thisFN): Zone Trace is searching for component '$($bit)'..."
-                # save the result in case this is the last bit of the zone path
-                $lastResult = $result
-                $Query = "getEntityByName?parentId=$($zId)&type=Zone&name=$($bit)"
-                $result = Invoke-BlueCatApi -Connection $BlueCatSession -Method Get -Request $Query
-                # $result.id is 0 if this bit isn't part of a valid zone path
-                # stop digging for zones and assume the rest of the path is host
-                if (-not $result.id) {
-                    $zDig = $false
-                    # load the value of bit into the first section of 'notZone' ...aka hostname
-                    $notZone = $bit
-                    # lastResult would only be null if we never found any zone path!
-                    if (-not $lastResult) {
-                        $zObj = $null
-                    } else {
-                        $zObj = Convert-BlueCatReply -Connection $BlueCatSession -RawObject $lastResult
-                        # we matched a path, but not a deployable zone...
-                        # put the entire path into 'notZone' and null out the zone object
-                        if (-not $zObj.property.deployable) {
-                            Write-Verbose "$($thisFN): No deployable zone found for '$($bit).$($zObj.property.absoluteName)'"
-                            $notZone = "$($bit).$($zObj.property.absoluteName)"
-                            $zObj = $null
-                        } # zone not deployable
-                    } # $lastResult is $null
-                } # $result.id is 0 - zone not found
-
-                # update the parent to this new zone and continue processing
-                $zId = $result.id
-            } # if ($zDig)
-            else {
-                # we're done zone digging - append everything else to 'notZone'
-                $notZone = "$($bit).$($notZone)"
-            }
-        } # foreach ($bit in $zPath)
-
-        # we matched a deployable zone exactly - hostname same as zone!
-        if ($lastResult -and ($null -eq $notZone)) {
-            $zObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-            # set notZone to a blank string and retrieve the zone info!
-            $notZone = ''
-            if (-not $zObj.property.deployable) {
-                $notZone = "$($bit).$($zObj.property.absoluteName)"
-                $zObj = $null
-            } # zone not deployable
+        if ($FQDN -eq $Zone.name) {
+            $ShortName = ''
+        } else {
+            $ShortName = $FQDN -replace "\.$($Zone.name)$", ''
         }
 
         $FQDNobj = New-Object -TypeName PSCustomObject
         $FQDNobj | Add-Member -MemberType NoteProperty -Name name      -Value $FQDN
         $FQDNobj | Add-Member -MemberType NoteProperty -Name type      -Value 'FQDN'
-        $FQDNobj | Add-Member -MemberType NoteProperty -Name shortName -Value $notZone
+        $FQDNobj | Add-Member -MemberType NoteProperty -Name shortName -Value $ShortName
 
-        $hObj = $null
-        if ($zObj) {
-            Write-Verbose "$($thisFN): Selected Zone #$($zObj.id) as '$($zObj.name)'"
-            $Query = "getEntityByName?parentId=$($zObj.id)&type=HostRecord&name=$($FQDNobj.shortName)"
-            $result = Invoke-BlueCatApi -Connection $BlueCatSession -Method Get -Request $Query
-            if ($result.id) {
-                $hObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-                Write-Verbose "$($thisFN): Selected Host #$($hObj.id) as '$($hObj.name)'"
+        if ($Zone) {
+            $FQDNobj | Add-Member -MemberType NoteProperty -Name zone -Value $Zone
+            $Query = "getEntityByName?parentId=$($Zone.id)&type=HostRecord&name=$($FQDNobj.shortName)"
+            $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -Connection $BlueCatSession
+            if ($BlueCatReply.id) {
+                $HostObj = $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+                Write-Verbose "$($thisFN): Selected Host #$($HostObj.id) as '$($HostObj.name)'"
+                $FQDNobj | Add-Member -MemberType NoteProperty -Name host -Value $HostObj
             } else {
                 Write-Verbose "$($thisFN): No host record found in internal zone"
             }
         }
 
-        $FQDNobj | Add-Member -MemberType NoteProperty -Name zone -Value $zObj
-        $FQDNobj | Add-Member -MemberType NoteProperty -Name host -Value $hObj
-
         # Search for an external host record matching the requested FQDN
         try {
             Write-Verbose "$($thisFN): Searching for External Host records..."
-            $xhObj = Get-BlueCatExternalHost -Name $FQDNobj.name -View $View -BlueCatSession $BlueCatSession
-            if ($xhObj) {
-                Write-Verbose "$($thisFN): Selected External Host #$($xhObj.id) as '$($xhObj.name)'"
+            $ExternalHost = Get-BlueCatExternalHost -Name $FQDNobj.name -View $View -BlueCatSession $BlueCatSession
+            if ($ExternalHost) {
+                Write-Verbose "$($thisFN): Selected External Host #$($ExternalHost.id) as '$($ExternalHost.name)'"
+                $FQDNobj | Add-Member -MemberType NoteProperty -Name external -Value $ExternalHost
             }
-            $FQDNobj | Add-Member -MemberType NoteProperty -Name external -Value $xhObj
         } catch {
-            $xhObj = $null
+            # Continue processing
         }
 
-        if ($hObj -and $xhObj) {
+        if ($HostObj -and $ExternalHost) {
             Write-Warning "$($thisFN): Found internal and external host records for '$($FQDNobj.name)'"
         }
 
         # Search for a CNAME/Alias if there is a deployable zone
-        if ($FQDNobj.zone.id) {
+        if ($Zone) {
             Write-Verbose "$($thisFN): Searching for CNAME/Alias records..."
-            $Query = "getEntityByName?parentId=$($FQDNobj.zone.id)&type=AliasRecord&name=$($FQDNobj.shortName)"
-            $result = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Get -Request $Query
+            $Query = "getEntityByName?parentId=$($Zone.id)&type=AliasRecord&name=$($ShortName)"
+            $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
-            if ($result.id) {
-                Write-Verbose "$($thisFN): Resolving Alias #$($result.id)..."
-                $AliasObj = $result | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+            if ($BlueCatReply.id) {
+                $AliasObj = $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
                 Write-Verbose "$($thisFN): Selected Alias #$($AliasObj.id) as '$($AliasObj.name)' (points to $($AliasObj.property.linkedRecordName))"
                 $FQDNobj | Add-Member -MemberType NoteProperty -Name alias -Value $AliasObj
             }

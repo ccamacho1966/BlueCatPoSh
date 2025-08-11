@@ -23,7 +23,9 @@ The library is known to work with BlueCat v9.4 and v9.6 at this time.
 
 ## Installation
 
-Manual installation at this time.
+``` powershell
+Install-Module -Name BlueCatPoSh
+```
 
 ## Usage
 
@@ -96,13 +98,15 @@ Get-BlueCatView -All -EveryConfig
 ## Roadmap
 
 1. Implement Update-* functions for DNS related records
-2. Implement Delete-* functions
-3. Implement IP4 Address related functions
+2. Implement IP4 Address related functions
 
 Features Under Consideration:
 * Integrate ARIN lookups for IP4 block/network creation/updates
 * IP6 Address related functions
 * Add support for BlueCat APIv2
+
+Minor Release Highlights
+* 3.1.0 implemented Remove-* functions for DNS related records
 
 ## Support
 
