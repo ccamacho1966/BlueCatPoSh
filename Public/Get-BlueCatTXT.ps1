@@ -33,8 +33,7 @@ Function Get-BlueCatTXT {
     [string] name
     [string] shortName
     [string] type = 'TXTRecord'
-    [string] relay
-    [int] priority
+    [string] text
     [PSCustomObject] config
     [PSCustomObject] view
     [PSCustomObject] zone
