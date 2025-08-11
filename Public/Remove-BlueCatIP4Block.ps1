@@ -1,4 +1,60 @@
 function Remove-BlueCatIP4Block {
+<#
+.SYNOPSIS
+    Remove an IP4 Block definition
+.DESCRIPTION
+    The Remove-BlueCatIP4Block cmdlet allows the removal of an IP4 Block definition.
+.PARAMETER CIDR
+    A string value that represents the IP4 Block in CIDR notation, such as '10.10.10.0/24'.
+.PARAMETER StartIP
+    A string value that represents the first IP4 Address in a Ranged IP4 Block.
+.PARAMETER EndIP
+    A string value that represents the last IP4 Address in a Ranged IP4 Block.
+.PARAMETER ID
+    An integer value representing the entity ID of the IP4 Block to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the IP4 Block to be removed.
+.PARAMETER Parent
+    A PSCustomObject that represents the IP4 Block or Configuration to be searched.
+
+    If the supplied parent is not the direct parent of the IP4 Block then Get-BlueCatIPContainerByIP will be used to search for the IP4 Block under the parent.
+    If the parent is not supplied for a CIDR or StartIP-EndIP Block then the library will attempt to use the default configuration as the parent.
+.PARAMETER ParentID
+    An integer value that represents the entity ID of the IP4 Block or Configuration to be searched.
+
+    If the supplied parent is not the direct parent of the IP4 Block then Get-BlueCatIPContainerByIP will be used to search for the IP4 Block under the parent.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatIP4Block -ParentID 1218 -CIDR '10.0.0.0/8'
+
+    Removes the IP4 Block '10.0.0.0/8' or throws an error if the IP4 Block is not found.
+    BlueCatSession will default to the current default session.
+    The record will be searched for under entity ID 1218.
+    An error will be thrown if entity ID 1218 is not an IP4 Block or Configuration.
+.EXAMPLE
+    PS> Remove-BlueCatIP4Block -Parent $BigIP4Block -StartIP '10.10.8.0' -EndIP '10.10.10.255' -BlueCatSession $Session3
+
+    Removes the IP4 Block '10.10.8.0-10.10.10.255' or throws an error if the IP4 Block is not found.
+    Use the BlueCatSession associated with $Session3 to perform this operation.
+    The record will be searched for under the entity represented by $BigIP4Block.
+.EXAMPLE
+    PS> Remove-BlueCatIP4Block -ID 1019
+
+    Removes the IP4 Block with entity ID 1019 or throws an error if the IP4 Block is not found.
+    BlueCatSession will default to the current default session.
+    Parent will be automatically selected based on the entity ID.
+.EXAMPLE
+    PS> $IP4Block | Remove-BlueCatIP4Block
+
+    Removes the IP4 Block represented by $IP4Block which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+    Parent will be automatically selected based on the entity information.
+.INPUTS
+    PSCustomObject representing the IP4 Block to be removed.
+.OUTPUTS
+    None
+#>
     [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(

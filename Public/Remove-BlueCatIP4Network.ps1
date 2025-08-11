@@ -1,6 +1,57 @@
 function Remove-BlueCatIP4Network {
-    [CmdletBinding(DefaultParameterSetName='byID')]
+<#
+.SYNOPSIS
+    Remove an IP4 Network definition
+.DESCRIPTION
+    The Remove-BlueCatIP4Network cmdlet allows the removal of an IP4 Network definition.
+.PARAMETER CIDR
+    A string value that represents the IP4 Network in CIDR notation, such as '10.10.10.0/24'.
+.PARAMETER ID
+    An integer value representing the entity ID of the IP4 Network to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the IP4 Network to be removed.
+.PARAMETER Parent
+    A PSCustomObject that represents the IP4 Block or Configuration to be searched.
 
+    If the supplied parent is not the direct parent of the IP4 Network then Get-BlueCatIPContainerByIP will be used to search for the IP4 Network under the parent.
+    If the parent is not supplied for a CIDR Network then the library will attempt to use the default configuration as the parent.
+.PARAMETER ParentID
+    An integer value that represents the entity ID of the IP4 Block or Configuration to be searched.
+
+    If the supplied parent is not the direct parent of the CIDR Network then Get-BlueCatIPContainerByIP will be used to search for the IP4 Network under the parent.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatIP4Network -ParentID 1148 -CIDR '10.20.10.0/24'
+
+    Removes the IP4 Network '10.20.10.0/24' or throws an error if the IP4 Network is not found.
+    BlueCatSession will default to the current default session.
+    The record will be searched for under entity ID 1218.
+    An error will be thrown if entity ID 1148 is not an IP4 Block or Configuration.
+.EXAMPLE
+    PS> Remove-BlueCatIP4Network -Parent $BigIP4Block -CIDR '10.10.10.0/24' -BlueCatSession $Session3
+
+    Removes the IP4 Network '10.10.10.0/24' or throws an error if the IP4 Network is not found.
+    Use the BlueCatSession associated with $Session3 to perform this operation.
+    The record will be searched for under the entity represented by $BigIP4Block.
+.EXAMPLE
+    PS> Remove-BlueCatIP4Network -ID 1219
+
+    Removes the IP4 Network with entity ID 1219 or throws an error if the IP4 Network is not found.
+    BlueCatSession will default to the current default session.
+    Parent will be automatically selected based on the entity ID.
+.EXAMPLE
+    PS> $IP4Network | Remove-BlueCatIP4Network
+
+    Removes the IP4 Network represented by $IP4Network which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+    Parent will be automatically selected based on the entity information.
+.INPUTS
+    PSCustomObject representing the IP4 Network to be removed.
+.OUTPUTS
+    None
+#>
+    [CmdletBinding(DefaultParameterSetName='byID')]
     param(
         [Parameter(ParameterSetName='byID',Mandatory)]
         [ValidateRange(1, [int]::MaxValue)]
