@@ -13,16 +13,14 @@ function Resolve-BlueCatZone {
 .PARAMETER BlueCatSession
     A BlueCat object representing the session to be used for this object creation.
 .EXAMPLE
-    PS> $Results = Resolve-BlueCatZone -Name 'myhostname.example.com' -View 1818 -BlueCatSession $Session19
-
-    PS> if ($Results.host) {
-            Write-Output "Found a Host record (ID:$($Results.host.id)) for $($Results.name) in zone $($Results.zone.name) (ID:$($Results.zone.id))"
+    PS> $LookupFQDN = 'myhostname.example.com'
+    PS> $Results    = Resolve-BlueCatZone -Name $LookupFQDN -View 1818 -BlueCatSession $Session19
+    PS> if ($Results) {
+            Write-Output "Found a deployable zone $($Results.name) (ID:$($Results.id)) for FQDN '$($LookupFQDN)'"
         }
 
     Searches the BlueCat database under view 1818 using BlueCat session $Session19 for 'myhostname.example.com'
-    Stores the results of the cmdlet in the variable $Results
-    Test members zone, host, external, and alias to see if matching records were found.
-    Directly reference the member objects for further related data.
+    Stores the deployable zone object in the variable $Results if found.
 .INPUTS
     None.
 .OUTPUTS
