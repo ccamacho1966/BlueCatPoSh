@@ -67,6 +67,9 @@
         [PSCustomObject] $View,
 
         [Parameter()]
+        [switch] $SkipExternalHostCheck,
+
+        [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
@@ -123,10 +126,12 @@
                 $ShortName = $FQDN -replace "\.$($Zone.name)$", ''
             }
 
-            # Warn if a possibly conflicting external host record was also found
-            $xHost = Get-BlueCatExternalHost -Name $FQDN -View $View -BlueCatSession $BlueCatSession
-            if ($xHost) {
-                Write-Warning "$($thisFN): Found External Host '$($xHost.name)' (ID:$($xHost.id))"
+            if (-not $SkipExternalHostCheck) {
+                # Warn if a possibly conflicting external host record was also found
+                $xHost = Get-BlueCatExternalHost -Name $FQDN -View $View -BlueCatSession $BlueCatSession
+                if ($xHost) {
+                    Write-Warning "$($thisFN): Found External Host '$($xHost.name)' (ID:$($xHost.id))"
+                }
             }
 
             # Lookup record
@@ -156,7 +161,9 @@
             $AliasObj
         } else {
             # No object was returned
-            throw "$($thisFN): No record found for $($FQDN)"
+            $Failure = "$($thisFN): No record found for $($FQDN)"
+            throw $Failure
+            Write-Verbose $Failure
         }
     }
 }
