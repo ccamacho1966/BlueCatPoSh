@@ -89,9 +89,23 @@
             }
             $zId = $BlueCatReply.id
         }
-        $zObj = $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
 
-        Write-Verbose "$($thisFN): Selected #$($zObj.id) as '$($zObj.name)'"
-        $zObj
+        # Build the full object
+        $PropertyObj = $BlueCatReply.properties | Convert-BlueCatPropertyString
+        $ZoneObj     = [PSCustomObject] @{
+            id         = $BlueCatReply.id
+            name       = $PropertyObj.absoluteName
+            type       = $BlueCatReply.type
+            shortName  = $BlueCatReply.name
+            deployable = $PropertyObj.deployable
+            property   = $PropertyObj
+            properties = $BlueCatReply.properties
+            view       = $View
+            config     = $View.config
+        }
+        Write-Verbose "$($thisFN): Selected #$($ZoneObj.id) as '$($ZoneObj.name)'"
+
+        # Return the Zone object to caller
+        $ZoneObj
     }
 }
