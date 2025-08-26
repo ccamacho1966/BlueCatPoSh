@@ -53,6 +53,7 @@
         [string] $Name,
 
         [Parameter(ParameterSetName='ViewID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
