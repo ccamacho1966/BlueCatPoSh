@@ -6,6 +6,8 @@ Function Get-BlueCatSRV {
     The Get-BlueCatSRV cmdlet allows the retrieval of a set of DNS SRV records.
 .PARAMETER Name
     A string value representing the FQDN of the SRV records to be retrieved.
+.PARAMETER Zone
+    An optional zone object to be searched. Providing a zone object reduces API calls making the lookup faster.
 .PARAMETER ViewID
     An integer value representing the entity ID of the desired view.
 .PARAMETER View
@@ -48,6 +50,9 @@ Function Get-BlueCatSRV {
         [Alias('HostName')]
         [string] $Name,
 
+        [Parameter()]
+        [PSCustomObject] $Zone,
+
         [Parameter(ParameterSetName='ViewID')]
         [ValidateRange(1, [int]::MaxValue)]
         [int]$ViewID,
@@ -69,50 +74,89 @@ Function Get-BlueCatSRV {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        if ($View) {
-            # A view object has been passed in so test its validity
-            if (-not $View.ID) {
-                # This is not a valid view object!
-                throw "Invalid View object passed to $($thisFN)!"
-            }
-            # Use the view ID from the View object
-            $ViewID = $View.ID
-        }
-
-        if (-not $ViewID) {
-            # No view ID has been passed in so attempt to use the default view
+        if ($ViewID) {
+            $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+        } elseif (-not $View) {
+            # No View or ViewID has been passed in so attempt to use the default view
             $BlueCatSession | Confirm-Settings -View
             Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View.name)' (ID:$($BlueCatSession.View.id))"
-            $ViewID = $BlueCatSession.View.id
+            $View = $BlueCatSession.View
+        }
+
+        if (-not $View) {
+            throw "$($thisFN): View could not be resolved"
+        }
+
+        if (-not $View.ID) {
+            # This is not a valid object!
+            throw "$($thisFN): Invalid View object passed to function!"
+        }
+
+        if ($View.type -ne 'View') {
+            throw "$($thisFN): Object is not a View (ID:$($View.ID) $($View.name) is a $($View.type))"
         }
 
         # Trim any trailing dots from the name for consistency/display purposes
         $FQDN = $Name | Test-ValidFQDN
 
-        # Standardize lookups and retrieved information
-        $Resolved = Resolve-BlueCatFQDN -FQDN $FQDN -ViewID $ViewID -BlueCatSession $BlueCatSession
-
-        # Warn that a possibly conflicting external host record was also found
-        if ($Resolved.external) {
-            Write-Warning "$($thisFN): Found External Host '$($Resolved.name)' (ID:$($Resolved.external.id))"
+        # Resolve zone if not provided
+        if (-not $Zone) {
+            $Zone = Resolve-BlueCatZone -Name $FQDN -View $View -BlueCatSession $BlueCatSession
+            if (-not $Zone) {
+                # Zone could not be resolved
+                Write-Warning "$($thisFN): Zone could not be resolved for $($FQDN)"
+            }
         }
 
-        # Use the resolved zone info to build a new query and retrieve the SRV record(s)
-        $Query = "getEntitiesByName?parentId=$($Resolved.zone.id)&type=SRVRecord&start=0&count=100&name=$($Resolved.shortName)"
-        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
-
-        if ($BlueCatReply.Count) {
-            [PSCustomObject[]] $SRVList = @()
-
-            # Loop through the results and build an object
-            foreach ($entry in $BlueCatReply) {
-                $SRVRecord = $entry | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-                $SRVList  += $SRVrecord
-                Write-Verbose "$($thisFN): SRV ID:$($SRVrecord.id) for $($FQDN) links to $($SRVrecord.target):$($SRVrecord.port) (Priority=$($SRVrecord.priority), Weight=$($SRVrecord.weight))"
+        if ($Zone) {
+            # Resolve short name for lookup
+            if ($FQDN -eq $Zone.name) {
+                $ShortName = ''
+            } else {
+                $ShortName = $FQDN -replace "\.$($Zone.name)$", ''
             }
 
-            # Return the SRV array to caller
-            $SRVList
+            # Warn if a possibly conflicting external host record was also found
+            $xHost = Get-BlueCatExternalHost -Name $FQDN -View $View -BlueCatSession $BlueCatSession
+            if ($xHost) {
+                Write-Warning "$($thisFN): Found External Host '$($xHost.name)' (ID:$($xHost.id))"
+            }
+
+            # Lookup record
+            $Query = "getEntitiesByName?parentId=$($Zone.id)&type=SRVRecord&start=0&count=100&name=$($ShortName)"
+            $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
         }
+
+        # Validate that an object was returned
+        if (-not $BlueCatReply.Count) {
+            throw "$($thisFN): No records found for $($FQDN)"
+        }
+
+        # Loop through the results and build an array of objects
+        [PSCustomObject[]] $SRVList = @()
+        foreach ($entry in $BlueCatReply) {
+            $PropertyObj = $entry.properties | Convert-BlueCatPropertyString
+            $SRVRecord    = [PSCustomObject] @{
+                id         = $entry.id
+                name       = $PropertyObj.absoluteName
+                type       = $entry.type
+                shortName  = $entry.name
+                target     = $PropertyObj.linkedRecordName
+                port       = $PropertyObj.port
+                priority   = $PropertyObj.priority
+                weight     = $PropertyObj.weight
+                zone       = $Zone
+                property   = $PropertyObj
+                properties = $entry.properties
+                view       = $View
+                config     = $View.config
+            }
+            $SRVList += $SRVRecord
+
+            Write-Verbose "$($thisFN): Selected ID:$($SRVrecord.id) for $($FQDN) links to $($SRVrecord.target):$($SRVrecord.port) (Priority=$($SRVrecord.priority), Weight=$($SRVrecord.weight))"
+        }
+
+        # Return the array to caller
+        $SRVList
     }
 }

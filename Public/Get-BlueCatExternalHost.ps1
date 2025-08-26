@@ -63,26 +63,31 @@ function Get-BlueCatExternalHost {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        if ($View) {
-            # A view object has been passed in so test its validity
-            if (-not $View.ID) {
-                # This is not a valid view object!
-                throw "Invalid View object passed to function!"
-            }
-            # Use the view ID from the View object
-            $ViewID = $View.ID
-        }
-
-        if (-not $ViewID) {
-            # No view ID has been passed in so attempt to use the default view
+        if ($ViewID) {
+            $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+        } elseif (-not $View) {
+            # No View or ViewID has been passed in so attempt to use the default view
             $BlueCatSession | Confirm-Settings -View
             Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View.name)' (ID:$($BlueCatSession.View.id))"
-            $ViewID = $BlueCatSession.View.id
+            $View = $BlueCatSession.View
+        }
+
+        if (-not $View) {
+            throw "$($thisFN): View could not be resolved"
+        }
+
+        if (-not $View.ID) {
+            # This is not a valid object!
+            throw "$($thisFN): Invalid View object passed to function!"
+        }
+
+        if ($View.type -ne 'View') {
+            throw "$($thisFN): Object is not a View (ID:$($View.ID) $($View.name) is a $($View.type))"
         }
 
         $xHost = $Name | Test-ValidFQDN
 
-        $Query = "getEntityByName?parentId=$($ViewID)&name=$($xHost)&type=ExternalHostRecord"
+        $Query = "getEntityByName?parentId=$($View.id)&name=$($xHost)&type=ExternalHostRecord"
         $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
         if (-not $BlueCatReply.id) {
@@ -93,7 +98,15 @@ function Get-BlueCatExternalHost {
             Write-Verbose "$($thisFN): Selected #$($BlueCatReply.id) as '$($BlueCatReply.name)'"
 
             # Build the full object and return
-            $BlueCatReply | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+            $BlueCatObj = [PSCustomObject] @{
+                id     = $BlueCatReply.id
+                name   = $BlueCatReply.name
+                type   = $BlueCatReply.type
+                view   = $View
+                config = $View.config
+            }
+
+            $BlueCatObj
         }
     }
 }

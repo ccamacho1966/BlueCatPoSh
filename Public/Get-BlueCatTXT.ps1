@@ -6,6 +6,8 @@ Function Get-BlueCatTXT {
     The Get-BlueCatTXT cmdlet allows the retrieval of a set of DNS TXT records.
 .PARAMETER Name
     A string value representing the FQDN of the TXT records to be retrieved.
+.PARAMETER Zone
+    An optional zone object to be searched. Providing a zone object reduces API calls making the lookup faster.
 .PARAMETER ViewID
     An integer value representing the entity ID of the desired view.
 .PARAMETER View
@@ -45,6 +47,9 @@ Function Get-BlueCatTXT {
         [Alias('HostName')]
         [string] $Name,
 
+        [Parameter()]
+        [PSCustomObject] $Zone,
+
         [Parameter(ParameterSetName='ViewID')]
         [ValidateRange(1, [int]::MaxValue)]
         [int] $ViewID,
@@ -66,60 +71,87 @@ Function Get-BlueCatTXT {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
+        if ($ViewID) {
+            $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+        } elseif (-not $View) {
+            # No View or ViewID has been passed in so attempt to use the default view
+            $BlueCatSession | Confirm-Settings -View
+            Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View.name)' (ID:$($BlueCatSession.View.id))"
+            $View = $BlueCatSession.View
+        }
+
+        if (-not $View) {
+            throw "$($thisFN): View could not be resolved"
+        }
+
+        if (-not $View.ID) {
+            # This is not a valid object!
+            throw "$($thisFN): Invalid View object passed to function!"
+        }
+
+        if ($View.type -ne 'View') {
+            throw "$($thisFN): Object is not a View (ID:$($View.ID) $($View.name) is a $($View.type))"
+        }
+
         # Trim any trailing dots from the name for consistency/display purposes
         $FQDN = $Name | Test-ValidFQDN
 
-        $ZoneLookup = @{
-            Name           = $FQDN
-            BlueCatSession = $BlueCatSession
+        # Resolve zone if not provided
+        if (-not $Zone) {
+            $Zone = Resolve-BlueCatZone -Name $FQDN -View $View -BlueCatSession $BlueCatSession
+            if (-not $Zone) {
+                # Zone could not be resolved
+                Write-Warning "$($thisFN): Zone could not be resolved for $($FQDN)"
+            }
         }
 
-        if ($ViewID) {
-            # Entity ID for a View has been passed in
-            $ZoneLookup.ViewID = $ViewID
-        } else {
-            if ($View) {
-                # A view object has been passed in so test its validity
-                if ((-not $View.ID) -or ($View.type -ne 'View')) {
-                    # This is not a valid view object!
-                    throw "Invalid View object passed to function!"
-                }
-
-                # Use the View object for the Zone lookup
-                $ZoneLookup.View = $View
+        if ($Zone) {
+            # Resolve short name for lookup
+            if ($FQDN -eq $Zone.name) {
+                $ShortName = ''
             } else {
-                # Attempt to use the default view
-                $BlueCatSession | Confirm-Settings -View
-                Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View.name)' (ID:$($BlueCatSession.View.id))"
-                $ZoneLookup.View = $BlueCatSession.View
-            }
-        }
-
-        # Standardize lookups and retrieved information
-        $Zone = Resolve-BlueCatZone @ZoneLookup
-
-        if ($FQDN -eq $Zone.name) {
-            $ShortName = ''
-        } else {
-            $ShortName = $FQDN -replace "\.$($Zone.name)$", ''
-        }
-
-        # Use the resolved zone info to build a new query and retrieve the TXT record(s)
-        $Query = "getEntitiesByName?parentId=$($Zone.id)&type=TXTRecord&start=0&count=100&name=$($ShortName)"
-        $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
-
-        if ($BlueCatReply.Count) {
-            [PSCustomObject[]] $TXTList = @()
-
-            # Loop through the results and build an array of objects
-            foreach ($entry in $BlueCatReply) {
-                $TXTRecord = $entry | Convert-BlueCatReply -BlueCatSession $BlueCatSession
-                $TXTList  += $TXTRecord
-                Write-Verbose "$($thisFN): Selected TXT #$($TXTrecord.id) for $($FQDN) ($($TXTrecord.relay) Priority $($TXTentry.priority)) for $($TXTentry.name)"
+                $ShortName = $FQDN -replace "\.$($Zone.name)$", ''
             }
 
-            # Return the TXT array to caller
-            $TXTList
+            # Warn if a possibly conflicting external host record was also found
+            $xHost = Get-BlueCatExternalHost -Name $FQDN -View $View -BlueCatSession $BlueCatSession
+            if ($xHost) {
+                Write-Warning "$($thisFN): Found External Host '$($xHost.name)' (ID:$($xHost.id))"
+            }
+
+            # Lookup record
+            $Query = "getEntitiesByName?parentId=$($Zone.id)&type=TXTRecord&start=0&count=100&name=$($ShortName)"
+            $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
         }
+
+        # Validate that an object was returned
+        if (-not $BlueCatReply.Count) {
+            throw "$($thisFN): No records found for $($FQDN)"
+        }
+
+        # Loop through the results and build an array of objects
+        [PSCustomObject[]] $TXTList = @()
+        foreach ($entry in $BlueCatReply) {
+            $PropertyObj = $entry.properties | Convert-BlueCatPropertyString
+            $PropertyObj | Add-Member -MemberType NoteProperty -Name 'address' -Value ($PropertyObj.addresses -split ',')
+            $TXTRecord    = [PSCustomObject] @{
+                id         = $entry.id
+                name       = $PropertyObj.absoluteName
+                type       = $entry.type
+                shortName  = $entry.name
+                text       = $PropertyObj.txt
+                zone       = $Zone
+                property   = $PropertyObj
+                properties = $entry.properties
+                view       = $View
+                config     = $View.config
+            }
+            $TXTList += $TXTRecord
+
+            Write-Verbose "$($thisFN): Selected ID:$($TXTrecord.id) for $($FQDN) ($($TXTrecord.text))"
+        }
+
+        # Return the array to caller
+        $TXTList
     }
 }
