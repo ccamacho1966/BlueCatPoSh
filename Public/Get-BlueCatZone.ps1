@@ -66,20 +66,34 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $Zone = $Name | Test-ValidFQDN
-
-        if ($View)   {
-            $ViewID = $View.ID
-        }
-        if (-not $ViewID) {
+        if ($ViewID) {
+            $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+        } elseif (-not $View) {
+            # No View or ViewID has been passed in so attempt to use the default view
             $BlueCatSession | Confirm-Settings -View
-            $ViewID = $BlueCatSession.View.id
+            Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View.name)' (ID:$($BlueCatSession.View.id))"
+            $View = $BlueCatSession.View
         }
+
+        if (-not $View) {
+            throw "$($thisFN): View could not be resolved"
+        }
+
+        if (-not $View.ID) {
+            # This is not a valid object!
+            throw "$($thisFN): Invalid View object passed to function!"
+        }
+
+        if ($View.type -ne 'View') {
+            throw "$($thisFN): Object is not a View (ID:$($View.ID) $($View.name) is a $($View.type))"
+        }
+
+        $Zone = $Name | Test-ValidFQDN
 
         $zPath = $Zone.Split('\.')
         [array]::Reverse($zPath)
 
-        $zId = $ViewID
+        $zId = $View.id
         foreach ($bit in $zPath) {
             $Query = "getEntityByName?parentId=$($zId)&type=Zone&name=$($bit)"
             $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
