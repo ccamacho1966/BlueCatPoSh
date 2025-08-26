@@ -48,7 +48,8 @@ Function Get-BlueCatMX {
         [Alias('HostName')]
         [string] $Name,
 
-        [Parameter()]
+        [Parameter(ParameterSetName='ZoneObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [PSCustomObject] $Zone,
 
         [Parameter(ParameterSetName='ViewID')]
@@ -72,7 +73,9 @@ Function Get-BlueCatMX {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        if ($ViewID) {
+        if ($Zone) {
+            $View = $Zone.view
+        } elseif ($ViewID) {
             $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
         } elseif (-not $View) {
             # No View or ViewID has been passed in so attempt to use the default view
