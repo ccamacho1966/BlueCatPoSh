@@ -117,7 +117,7 @@ function Remove-BlueCatZone {
                 throw $FailureMessage
             }
 
-            $Object = Get-BlueCatZone -Name $Name -View $View -BlueCatSession $BlueCatSession
+            $Object = Get-BlueCatZone -Name $Name -View $View -BlueCatSession $BlueCatSession -ErrorAction SilentlyContinue
         }
 
         if (-not $Object) {
@@ -126,8 +126,9 @@ function Remove-BlueCatZone {
             } else {
                 $FailureMessage = "$($thisFN): Failed to convert Name '$($Name)' in View '$($View.name)' to a Zone Record"
             }
-            Write-Verbose $FailureMessage
             throw $FailureMessage
+            Write-Verbose $FailureMessage
+            return
         }
 
         if (-not $Object.ID) {

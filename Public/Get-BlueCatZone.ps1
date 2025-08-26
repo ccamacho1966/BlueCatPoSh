@@ -123,7 +123,9 @@
             $ZoneObj
         } else {
             # No object was returned
-            throw "$($thisFN): Zone $($Zone) not found!"
+            $Failure = "$($thisFN): Zone $($Zone) not found!"
+            throw $Failure
+            Write-Verbose $Failure
         }
     }
 }

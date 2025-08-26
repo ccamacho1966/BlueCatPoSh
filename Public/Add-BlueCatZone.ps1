@@ -78,34 +78,29 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
-        $NewZone = $Name | Test-ValidFQDN
-        $LookupParms = @{
-            Name           = $NewZone
-            BlueCatSession = $BlueCatSession
-        }
-
         if ($ViewID) {
-            $View             = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
-            $LookupParms.View = $View
-        } elseif ($View)   {
-            $LookupParms.View = $View
-            $ViewID           = $View.ID
-        } else {
+            $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+        } elseif (-not $View)   {
             $BlueCatSession | Confirm-Settings -View
-            $View             = $BlueCatSession.View
-            $ViewID           = $View.ID
-            $LookupParms.View = $View
+            $View = $BlueCatSession.View
         }
 
-        Write-Verbose "$($thisFN): Create new zone $($Name) in View $($View.Name) under Configuration $($View.Config.Name)"
+        $FQDN = $Name | Test-ValidFQDN
 
-        try {
-            $ZoneCheck = Get-BlueCatZone @LookupParms
-        } catch {
-            # This is what we want - Zone not found
+        $LookupParms = @{
+            Name           = $FQDN
+            View           = $View
+            BlueCatSession = $BlueCatSession
+            ErrorAction    = 'SilentlyContinue'
         }
-        if ($ZoneCheck) {
-            throw "Zone $($ZoneCheck.name) already exists"
+
+        Write-Verbose "$($thisFN): Create new zone $($FQDN) in View $($View.Name) under Configuration $($View.Config.Name)"
+
+        if (Get-BlueCatZone @LookupParms) {
+            $Failure = "$($thisFN): Zone $($FQDN) already exists"
+            throw $Failure
+            Write-Verbose $Failure
+            return
         }
 
         if ($Property) {
@@ -131,19 +126,22 @@
 
         $CreateZone = @{
             Method         = 'Post'
-            Request        = "addZone?parentId=$($ViewID)&absoluteName=$($NewZone)&properties=$([uri]::EscapeDataString($PropertyString))"
+            Request        = "addZone?parentId=$($View.id)&absoluteName=$($FQDN)&properties=$([uri]::EscapeDataString($PropertyString))"
             BlueCatSession = $BlueCatSession
         }
 
         $BlueCatReply = Invoke-BlueCatApi @CreateZone
-        if (-not $BlueCatReply) {
-            throw "Host creation failed for $($NewHost) - $($BlueCatReply)"
-        }
 
-        Write-Verbose "$($thisFN): Created new zone $($NewZone) in View $($View.Name) under Configuration $($View.Config.Name) (ID:$($BlueCatReply))"
+        if ($BlueCatReply) {
+            Write-Verbose "$($thisFN): Created new zone $($FQDN) in View $($View.Name) under Configuration $($View.Config.Name) (ID:$($BlueCatReply))"
 
-        if ($PassThru) {
-            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+            if ($PassThru) {
+                Get-BlueCatZone -Name $FQDN -View $View -BlueCatSession $BlueCatSession
+            }
+        } else {
+            $Failure = "$($thisFN): Zone creation failed for $($FQDN)"
+            throw $Failure
+            Write-Verbose $Failure
         }
     }
 }
