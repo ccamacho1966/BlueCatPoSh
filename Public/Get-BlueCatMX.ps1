@@ -128,35 +128,35 @@ Function Get-BlueCatMX {
             $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
         }
 
-        # Validate that an object was returned
-        if (-not $BlueCatReply.Count) {
+        if ($BlueCatReply.Count) {
+            # Loop through the results and build an array of objects
+            [PSCustomObject[]] $MXList = @()
+            foreach ($entry in $BlueCatReply) {
+                $PropertyObj = $entry.properties | Convert-BlueCatPropertyString
+                $PropertyObj | Add-Member -MemberType NoteProperty -Name 'address' -Value ($PropertyObj.addresses -split ',')
+                $MXRecord    = [PSCustomObject] @{
+                    id         = $entry.id
+                    name       = $PropertyObj.absoluteName
+                    type       = $entry.type
+                    shortName  = $entry.name
+                    relay      = $PropertyObj.linkedRecordName
+                    priority   = $PropertyObj.priority
+                    zone       = $Zone
+                    property   = $PropertyObj
+                    properties = $entry.properties
+                    view       = $View
+                    config     = $View.config
+                }
+                $MXList += $MXRecord
+
+                Write-Verbose "$($thisFN): Selected ID:$($MXrecord.id) for $($FQDN) (Priority $($MXrecord.priority): $($MXrecord.relay))"
+            }
+
+            # Return the array to caller
+            $MXList
+        } else {
+            # No objects were returned
             throw "$($thisFN): No records found for $($FQDN)"
         }
-
-        # Loop through the results and build an array of objects
-        [PSCustomObject[]] $MXList = @()
-        foreach ($entry in $BlueCatReply) {
-            $PropertyObj = $entry.properties | Convert-BlueCatPropertyString
-            $PropertyObj | Add-Member -MemberType NoteProperty -Name 'address' -Value ($PropertyObj.addresses -split ',')
-            $MXRecord    = [PSCustomObject] @{
-                id         = $entry.id
-                name       = $PropertyObj.absoluteName
-                type       = $entry.type
-                shortName  = $entry.name
-                relay      = $PropertyObj.linkedRecordName
-                priority   = $PropertyObj.priority
-                zone       = $Zone
-                property   = $PropertyObj
-                properties = $entry.properties
-                view       = $View
-                config     = $View.config
-            }
-            $MXList += $MXRecord
-
-            Write-Verbose "$($thisFN): Selected ID:$($MXrecord.id) for $($FQDN) (Priority $($MXrecord.priority): $($MXrecord.relay))"
-        }
-
-        # Return the array to caller
-        $MXList
     }
 }

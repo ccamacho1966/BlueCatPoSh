@@ -130,36 +130,36 @@ Function Get-BlueCatSRV {
             $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
         }
 
-        # Validate that an object was returned
-        if (-not $BlueCatReply.Count) {
+        if ($BlueCatReply.Count) {
+            # Loop through the results and build an array of objects
+            [PSCustomObject[]] $SRVList = @()
+            foreach ($entry in $BlueCatReply) {
+                $PropertyObj = $entry.properties | Convert-BlueCatPropertyString
+                $SRVRecord    = [PSCustomObject] @{
+                    id         = $entry.id
+                    name       = $PropertyObj.absoluteName
+                    type       = $entry.type
+                    shortName  = $entry.name
+                    target     = $PropertyObj.linkedRecordName
+                    port       = $PropertyObj.port
+                    priority   = $PropertyObj.priority
+                    weight     = $PropertyObj.weight
+                    zone       = $Zone
+                    property   = $PropertyObj
+                    properties = $entry.properties
+                    view       = $View
+                    config     = $View.config
+                }
+                $SRVList += $SRVRecord
+
+                Write-Verbose "$($thisFN): Selected ID:$($SRVrecord.id) for $($FQDN) links to $($SRVrecord.target):$($SRVrecord.port) (Priority=$($SRVrecord.priority), Weight=$($SRVrecord.weight))"
+            }
+
+            # Return the array to caller
+            $SRVList
+        } else {
+            # No objects were returned
             throw "$($thisFN): No records found for $($FQDN)"
         }
-
-        # Loop through the results and build an array of objects
-        [PSCustomObject[]] $SRVList = @()
-        foreach ($entry in $BlueCatReply) {
-            $PropertyObj = $entry.properties | Convert-BlueCatPropertyString
-            $SRVRecord    = [PSCustomObject] @{
-                id         = $entry.id
-                name       = $PropertyObj.absoluteName
-                type       = $entry.type
-                shortName  = $entry.name
-                target     = $PropertyObj.linkedRecordName
-                port       = $PropertyObj.port
-                priority   = $PropertyObj.priority
-                weight     = $PropertyObj.weight
-                zone       = $Zone
-                property   = $PropertyObj
-                properties = $entry.properties
-                view       = $View
-                config     = $View.config
-            }
-            $SRVList += $SRVRecord
-
-            Write-Verbose "$($thisFN): Selected ID:$($SRVrecord.id) for $($FQDN) links to $($SRVrecord.target):$($SRVrecord.port) (Priority=$($SRVrecord.priority), Weight=$($SRVrecord.weight))"
-        }
-
-        # Return the array to caller
-        $SRVList
     }
 }

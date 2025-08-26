@@ -135,27 +135,28 @@
         }
 
         # Validate that an object was returned
-        if (-not $BlueCatReply.id) {
+        if ($BlueCatReply.id) {
+            # Build the full object
+            $PropertyObj = $BlueCatReply.properties | Convert-BlueCatPropertyString
+            $AliasObj    = [PSCustomObject] @{
+                id         = $BlueCatReply.id
+                name       = $PropertyObj.absoluteName
+                type       = $BlueCatReply.type
+                shortName  = $BlueCatReply.name
+                target     = $PropertyObj.linkedRecordName
+                zone       = $Zone
+                property   = $PropertyObj
+                properties = $BlueCatReply.properties
+                view       = $View
+                config     = $View.config
+            }
+            Write-Verbose "$($thisFN): Selected #$($AliasObj.id) as '$($AliasObj.name)' (points to '$($AliasObj.target)')"
+
+            # Return the alias object to caller
+            $AliasObj
+        } else {
+            # No object was returned
             throw "$($thisFN): No record found for $($FQDN)"
         }
-
-        # Build the full object
-        $PropertyObj = $BlueCatReply.properties | Convert-BlueCatPropertyString
-        $AliasObj    = [PSCustomObject] @{
-            id         = $BlueCatReply.id
-            name       = $PropertyObj.absoluteName
-            type       = $BlueCatReply.type
-            shortName  = $BlueCatReply.name
-            target     = $PropertyObj.linkedRecordName
-            zone       = $Zone
-            property   = $PropertyObj
-            properties = $BlueCatReply.properties
-            view       = $View
-            config     = $View.config
-        }
-        Write-Verbose "$($thisFN): Selected #$($AliasObj.id) as '$($AliasObj.name)' (points to '$($AliasObj.target)')"
-
-        # Return the alias object to caller
-        $AliasObj
     }
 }

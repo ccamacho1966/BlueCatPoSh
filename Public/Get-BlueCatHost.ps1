@@ -129,28 +129,28 @@
             $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
         }
 
-        # Validate that an object was returned
-        if (-not $BlueCatReply.id) {
+        if ($BlueCatReply.id) {
+            # Build the full object
+            $PropertyObj = $BlueCatReply.properties | Convert-BlueCatPropertyString
+            $PropertyObj | Add-Member -MemberType NoteProperty -Name 'address' -Value ($PropertyObj.addresses -split ',')
+            $HostObj     = [PSCustomObject] @{
+                id         = $BlueCatReply.id
+                name       = $PropertyObj.absoluteName
+                type       = $BlueCatReply.type
+                shortName  = $BlueCatReply.name
+                address    = $PropertyObj.address
+                zone       = $Zone
+                property   = $PropertyObj
+                properties = $BlueCatReply.properties
+                view       = $View
+                config     = $View.config
+            }
+
+            # Return the host object to caller
+            $HostObj
+        } else {
+            # No object was returned
             throw "$($thisFN): No record found for $($FQDN)"
         }
-
-        # Build the full object
-        $PropertyObj = $BlueCatReply.properties | Convert-BlueCatPropertyString
-        $PropertyObj | Add-Member -MemberType NoteProperty -Name 'address' -Value ($PropertyObj.addresses -split ',')
-        $HostObj     = [PSCustomObject] @{
-            id         = $BlueCatReply.id
-            name       = $PropertyObj.absoluteName
-            type       = $BlueCatReply.type
-            shortName  = $BlueCatReply.name
-            address    = $PropertyObj.address
-            zone       = $Zone
-            property   = $PropertyObj
-            properties = $BlueCatReply.properties
-            view       = $View
-            config     = $View.config
-        }
-
-        # Return the host object to caller
-        $HostObj
     }
 }

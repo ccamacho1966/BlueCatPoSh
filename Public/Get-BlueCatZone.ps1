@@ -98,28 +98,32 @@
             $Query = "getEntityByName?parentId=$($zId)&type=Zone&name=$($bit)"
             $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
             if (-not $BlueCatReply.id) {
-                Write-Verbose "$($thisFN): Zone $($Zone) not found!"
-                return
+                break
             }
             $zId = $BlueCatReply.id
         }
 
-        # Build the full object
-        $PropertyObj = $BlueCatReply.properties | Convert-BlueCatPropertyString
-        $ZoneObj     = [PSCustomObject] @{
-            id         = $BlueCatReply.id
-            name       = $PropertyObj.absoluteName
-            type       = $BlueCatReply.type
-            shortName  = $BlueCatReply.name
-            deployable = $PropertyObj.deployable
-            property   = $PropertyObj
-            properties = $BlueCatReply.properties
-            view       = $View
-            config     = $View.config
-        }
-        Write-Verbose "$($thisFN): Selected #$($ZoneObj.id) as '$($ZoneObj.name)'"
+        if ($BlueCatReply.id) {
+            # Build the full object
+            $PropertyObj = $BlueCatReply.properties | Convert-BlueCatPropertyString
+            $ZoneObj     = [PSCustomObject] @{
+                id         = $BlueCatReply.id
+                name       = $PropertyObj.absoluteName
+                type       = $BlueCatReply.type
+                shortName  = $BlueCatReply.name
+                deployable = $PropertyObj.deployable
+                property   = $PropertyObj
+                properties = $BlueCatReply.properties
+                view       = $View
+                config     = $View.config
+            }
+            Write-Verbose "$($thisFN): Selected #$($ZoneObj.id) as '$($ZoneObj.name)'"
 
-        # Return the Zone object to caller
-        $ZoneObj
+            # Return the Zone object to caller
+            $ZoneObj
+        } else {
+            # No object was returned
+            throw "$($thisFN): Zone $($Zone) not found!"
+        }
     }
 }
