@@ -155,8 +155,10 @@ Function Get-BlueCatMX {
             # Return the array to caller
             $MXList
         } else {
-            # No objects were returned
-            throw "$($thisFN): No records found for $($FQDN)"
+            # No object was returned
+            $Failure = "$($thisFN): No records found for $($FQDN)"
+            throw $Failure
+            Write-Verbose $Failure
         }
     }
 }

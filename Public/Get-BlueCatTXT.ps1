@@ -153,8 +153,10 @@ Function Get-BlueCatTXT {
             # Return the array to caller
             $TXTList
         } else {
-            # No objects were returned
-            throw "$($thisFN): No records found for $($FQDN)"
+            # No object was returned
+            $Failure = "$($thisFN): No records found for $($FQDN)"
+            throw $Failure
+            Write-Verbose $Failure
         }
     }
 }

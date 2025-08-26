@@ -85,15 +85,12 @@ function Get-BlueCatExternalHost {
             throw "$($thisFN): Object is not a View (ID:$($View.ID) $($View.name) is a $($View.type))"
         }
 
-        $xHost = $Name | Test-ValidFQDN
+        $FQDN = $Name | Test-ValidFQDN
 
-        $Query = "getEntityByName?parentId=$($View.id)&name=$($xHost)&type=ExternalHostRecord"
+        $Query = "getEntityByName?parentId=$($View.id)&name=$($FQDN)&type=ExternalHostRecord"
         $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
 
-        if (-not $BlueCatReply.id) {
-            # Record not found. Return nothing/null.
-            Write-Verbose "$($thisFN): External Host Record for '$($xHost)' not found: $($BlueCatReply)"
-        } else {
+        if ($BlueCatReply.id) {
             # Found the external host - return the result
             Write-Verbose "$($thisFN): Selected #$($BlueCatReply.id) as '$($BlueCatReply.name)'"
 
@@ -107,6 +104,11 @@ function Get-BlueCatExternalHost {
             }
 
             $BlueCatObj
+        } else {
+            # No object was returned
+            $Failure = "$($thisFN): No record found for $($FQDN)"
+#            throw $Failure
+            Write-Verbose $Failure
         }
     }
 }
