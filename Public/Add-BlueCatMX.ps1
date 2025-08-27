@@ -171,24 +171,34 @@ function Add-BlueCatMX {
         $RelayFQDN        = $Relay | Test-ValidFQDN
         $LookupRelay.Name = $RelayFQDN
 
-        $relayInfo        = Resolve-BlueCatFQDN @LookupRelay
-        if ($relayInfo.host) {
-            $relayName = $relayInfo.host.name
-            Write-Verbose "$($thisFN): Found host record for relay '$($RelayFQDN)' (ID:$($relayInfo.host.id))"
-            if ($relayInfo.external) {
-                Write-Warning "$($thisFN): Both internal and external host entries found for $($RelayFQDN)"
-            }
-        } elseif ($relayInfo.external) {
-            $relayName = $relayInfo.external.name
-            Write-Verbose "$($thisFN): Found EXTERNAL host record for relay '$($RelayFQDN)' (ID:$($relayInfo.external.id))"
-        } else {
-            throw "Aborting MX record creation: No host record found for relay $($RelayFQDN)"
+        try {
+            # Attempt an external host lookup first
+            $RelayEntry = Get-BlueCatExternalHost @LookupRelay
+        } catch {
+            # record not found - continue processing
         }
+
+        if (-not $RelayEntry) {
+            # No external host so attempt an internal host lookup
+            try {
+                $RelayEntry = Get-BlueCatHost @LookupRelay
+            } catch {
+                # record not found - continue processing
+            }
+        }
+
+        if (-not $RelayEntry) {
+            # If we've reached here, there is nothing to link the record to
+            throw "$($thisFN): No record found for linked host '$($LinkedFQDN)'"
+        }
+
+        Write-Verbose "$($thisFN): Using $($RelayEntry.type) ID:$($RelayEntry.id) for linked host '$($RelayEntry.name)'"
+        $propString = "ttl=$($TTL)|absoluteName=$($FQDN)|linkedRecordName=$($RelayEntry.name)|priority=$($Priority)|"
 
         $Body = @{
             type       = 'MXRecord'
             name       = $ShortName
-            properties = "ttl=$($TTL)|absoluteName=$($FQDN)|linkedRecordName=$($relayName)|priority=$($Priority)|"
+            properties = $propString
         }
         $CreateMXRecord = @{
             Method         = 'Post'

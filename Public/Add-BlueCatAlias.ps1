@@ -170,21 +170,29 @@
         $LinkedFQDN        = $LinkedHost | Test-ValidFQDN
         $LookupLinked.Name = $LinkedFQDN
 
-        $LinkedInfo        = Resolve-BlueCatFQDN @LookupLinked
-        $propString = "ttl=$($TTL)|absoluteName=$($FQDN)|linkedRecordName=$($LinkedInfo.name)|"
-        if ($LinkedInfo.host) {
-            $LinkedFQDN = $LinkedInfo.host.name
-            Write-Verbose "$($thisFN): Found host record for linked host '$($LinkedFQDN)' (ID:$($LinkedInfo.host.id))"
-            if ($LinkedInfo.external) {
-                Write-Warning "$($thisFN): Both internal and external host entries found for $($LinkedFQDN)"
-            }
-            $propString += "linkedParentZoneName=$($LinkedInfo.zone.name)|"
-        } elseif ($LinkedInfo.external) {
-            $LinkedFQDN = $LinkedInfo.external.name
-            Write-Verbose "$($thisFN): Found EXTERNAL host record for linked host '$($LinkedFQDN)' (ID:$($LinkedInfo.external.id))"
-        } else {
-            throw "Aborting CNAME record creation: No host record found for linked host $($LinkedFQDN)"
+        try {
+            # Attempt an external host lookup first
+            $LinkedEntry = Get-BlueCatExternalHost @LookupLinked
+        } catch {
+            # record not found - continue processing
         }
+
+        if (-not $LinkedEntry) {
+            # No external host so attempt an internal host lookup
+            try {
+                $LinkedEntry = Get-BlueCatHost @LookupLinked
+            } catch {
+                # record not found - continue processing
+            }
+        }
+
+        if (-not $LinkedEntry) {
+            # If we've reached here, there is nothing to link the record to
+            throw "$($thisFN): No record found for linked host '$($LinkedFQDN)'"
+        }
+
+        Write-Verbose "$($thisFN): Using $($LinkedEntry.type) ID:$($LinkedEntry.id) for linked host '$($LinkedEntry.name)'"
+        $propString = "ttl=$($TTL)|absoluteName=$($FQDN)|linkedRecordName=$($LinkedEntry.name)|"
 
         $Body = @{
             type       = 'AliasRecord'

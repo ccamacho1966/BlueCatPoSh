@@ -189,24 +189,34 @@ function Add-BlueCatSRV
         $TargetFQDN        = $Target | Test-ValidFQDN
         $LookupTarget.Name = $TargetFQDN
 
-        $targetInfo        = Resolve-BlueCatFQDN @LookupTarget
-        if ($targetInfo.host) {
-            $targetName = $targetInfo.host.name
-            Write-Verbose "$($thisFN): Found host record for target '$($targetName)' (ID:$($targetInfo.host.id))"
-            if ($targetName.external) {
-                Write-Warning "$($thisFN): Both internal and external host entries found for $($targetName.host)"
-            }
-        } elseif ($targetInfo.external) {
-            $targetName = $targetInfo.external.name
-            Write-Verbose "$($thisFN): Found EXTERNAL host record for target '$($targetName)' (ID:$($targetInfo.external.id))"
-        } else {
-            throw "Aborting SRV record creation: No host record found for target $($TargetFQDN)"
+        try {
+            # Attempt an external host lookup first
+            $TargetEntry = Get-BlueCatExternalHost @LookupTarget
+        } catch {
+            # record not found - continue processing
         }
+
+        if (-not $TargetEntry) {
+            # No external host so attempt an internal host lookup
+            try {
+                $TargetEntry = Get-BlueCatHost @LookupTarget
+            } catch {
+                # record not found - continue processing
+            }
+        }
+
+        if (-not $TargetEntry) {
+            # If we've reached here, there is nothing to link the record to
+            throw "$($thisFN): No record found for linked host '$($LinkedFQDN)'"
+        }
+
+        Write-Verbose "$($thisFN): Using $($TargetEntry.type) ID:$($TargetEntry.id) for linked host '$($TargetEntry.name)'"
+        $propString = "ttl=$($TTL)|absoluteName=$($FQDN)|linkedRecordName=$($TargetEntry.name)|port=$($Port)|priority=$($Priority)|weight=$($Weight)|"
 
         $Body = @{
             type       = 'SRVRecord'
             name       = $ShortName
-            properties = "ttl=$($TTL)|absoluteName=$($FQDN)|linkedRecordName=$($TargetFQDN)|port=$($Port)|priority=$($Priority)|weight=$($Weight)|"
+            properties = $propString
         }
         $CreateSRVRecord = @{
             Method         = 'Post'
