@@ -96,7 +96,12 @@
 
         Write-Verbose "$($thisFN): Create new zone $($FQDN) in View $($View.Name) under Configuration $($View.Config.Name)"
 
-        if (Get-BlueCatZone @LookupParms) {
+        try {
+            $ExistingZone = Get-BlueCatZone @LookupParms
+        } catch {
+            # zone not found - continue processing
+        }
+        if ($ExistingZone) {
             $Failure = "$($thisFN): Zone $($FQDN) already exists"
             throw $Failure
             Write-Verbose $Failure
