@@ -21,6 +21,8 @@
     A value of -1 will set the new record to use the zone default TTL.
 
     If not specified, BlueCatPoSh will default this value to -1 (use zone default).
+.PARAMETER Zone
+    An optional zone object to be searched. Providing a zone object reduces API calls making the lookup faster.
 .PARAMETER ViewID
     An integer value representing the entity ID of the desired view.
 .PARAMETER View

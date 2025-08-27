@@ -18,6 +18,8 @@
     A value of -1 will set the new record to use the zone default TTL.
 
     If not specified, BlueCatPoSh will default this value to -1 (use zone default).
+.PARAMETER Zone
+    An optional zone object to be searched. Providing a zone object reduces API calls making the lookup faster.
 .PARAMETER ViewID
     An integer value representing the entity ID of the desired view.
 .PARAMETER View
@@ -68,7 +70,12 @@
         [Parameter()]
         [int] $TTL = -1,
 
+        [Parameter(ParameterSetName='ZoneObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject] $Zone,
+
         [Parameter(ParameterSetName='ViewID')]
+        [ValidateRange(1, [int]::MaxValue)]
         [int] $ViewID,
 
         [Parameter(ParameterSetName='ViewObj',Mandatory)]
@@ -90,56 +97,94 @@
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
+        if ($Zone) {
+            $View = $Zone.view
+        } elseif ($ViewID) {
+            $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+        } elseif (-not $View) {
+            # No View or ViewID has been passed in so attempt to use the default view
+            $BlueCatSession | Confirm-Settings -View
+            Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View.name)' (ID:$($BlueCatSession.View.id))"
+            $View = $BlueCatSession.View
+        }
+
+        if (-not $View) {
+            throw "$($thisFN): View could not be resolved"
+        }
+
+        if (-not $View.ID) {
+            # This is not a valid object!
+            throw "$($thisFN): Invalid View object passed to function!"
+        }
+
+        if ($View.type -ne 'View') {
+            throw "$($thisFN): Object is not a View (ID:$($View.ID) $($View.name) is a $($View.type))"
+        }
+
+        # Trim any trailing dots from the name for consistency/display purposes
         $FQDN = $Name | Test-ValidFQDN
-        $LookupParms = @{
+
+        # Resolve zone if not provided
+        if (-not $Zone) {
+            $Zone = Resolve-BlueCatZone -Name $FQDN -View $View -BlueCatSession $BlueCatSession
+            if (-not $Zone) {
+                # Zone could not be resolved
+                throw "$($thisFN): Zone could not be resolved for $($FQDN)"
+            }
+        }
+
+        # Resolve short name for lookup
+        if ($FQDN -eq $Zone.name) {
+            $ShortName = ''
+        } else {
+            $ShortName = $FQDN -replace "\.$($Zone.name)$", ''
+        }
+
+        $LookupBase = @{
             Name           = $FQDN
             BlueCatSession = $BlueCatSession
+            ErrorAction    = 'SilentlyContinue'
         }
-        if ($ViewID) {
-            $LookupParms.ViewID = $ViewID
-        } elseif ($View)   {
-            $LookupParms.View   = $View
-            $ViewID             = $View.ID
-        }
+        $LookupZone = $LookupBase + @{ Zone = $Zone; SkipExternalHostCheck = $true }
+        $LookupView = $LookupBase + @{ View = $View }
 
-        $TextInfo = Resolve-BlueCatFQDN @LookupParms
-
-        if ($TextInfo.alias) {
-            throw "Aborting TXT record creation: Alias/CName record for $($FQDN) found!"
+        if (Get-BlueCatAlias @LookupZone) {
+            # There is already an existing alias
+            throw "$($thisFN): Existing alias record found - aborting TXT creation!"
         }
 
-        if (-not $TextInfo.zone) {
-            # No deployable zone was found for TXT record
-            throw "No deployable zone was found for $($FQDN)"
+        $ExistingExternal = Get-BlueCatExternalHost @LookupView
+        if ($ExistingExternal) {
+            Write-Warning "$($thisFN): An external host entry exists for '$($ExistingExternal.name)' (ID:$($ExistingExternal.id))"
         }
 
-        Write-Verbose "$($thisFN): Selected Zone #$($TextInfo.zone.id) as '$($TextInfo.zone.name)'"
-
-        if ($TextInfo.external) {
-            Write-Warning "$($thisFN): An external host entry exists for '$($TextInfo.external.name)'"
-        }
+        # Insert check for duplicate / conflicting entries
 
         $Body = @{
             type       = 'TXTRecord'
-            name       = $TextInfo.shortName
-            properties = "ttl=$($TTL)|absoluteName=$($TextInfo.name)|txt=$($Text.Trim('"'))|"
+            name       = $ShortName
+            properties = "ttl=$($TTL)|absoluteName=$($FQDN)|txt=$($Text.Trim('"'))|"
         }
         $CreateTXTRecord = @{
             Method         = 'Post'
-            Request        = "addEntity?parentId=$($TextInfo.zone.id)"
+            Request        = "addEntity?parentId=$($Zone.id)"
             Body           = ($Body | ConvertTo-Json)
             BlueCatSession = $BlueCatSession
         }
 
         $BlueCatReply = Invoke-BlueCatApi @CreateTXTRecord
-        if (-not $BlueCatReply) {
-            throw "TXT record creation failed for $($FQDN)"
-        }
 
-        Write-Verbose "$($thisFN): Created ID:$($BlueCatReply) for '$($TextInfo.name)'"
+        if ($BlueCatReply) {
+            Write-Verbose "$($thisFN): Created ID:$($BlueCatReply) for '$($FQDN)'"
 
-        if ($PassThru) {
-            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+            if ($PassThru) {
+                # Must pull record by ID since there can be multiple records
+                Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+            }
+        } else {
+            $Failure = "$($thisFN): Record creation failed for $($FQDN)"
+            throw $Failure
+            Write-Verbose $Failure
         }
     }
 }

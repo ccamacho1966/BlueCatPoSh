@@ -105,20 +105,18 @@
         $FQDN = $Name | Test-ValidFQDN
 
         # Resolve zone if not provided
-        if (-not $Zone) {
-            $Zone = Resolve-BlueCatZone -Name $FQDN -View $View -BlueCatSession $BlueCatSession
-            if (-not $Zone) {
-                # Zone could not be resolved
-                Write-Warning "$($thisFN): Zone could not be resolved for $($FQDN)"
-            }
+        if ($Zone) {
+            $ZoneObj = $Zone
+        } else {
+            $ZoneObj = Resolve-BlueCatZone -Name $FQDN -View $View -BlueCatSession $BlueCatSession
         }
 
-        if ($Zone) {
+        if ($ZoneObj) {
             # Resolve short name for lookup
-            if ($FQDN -eq $Zone.name) {
+            if ($FQDN -eq $ZoneObj.name) {
                 $ShortName = ''
             } else {
-                $ShortName = $FQDN -replace "\.$($Zone.name)$", ''
+                $ShortName = $FQDN -replace "\.$($ZoneObj.name)$", ''
             }
 
             if (-not $SkipExternalHostCheck) {
@@ -130,8 +128,11 @@
             }
 
             # Lookup record
-            $Query = "getEntityByName?parentId=$($Zone.id)&name=$($ShortName)&type=HostRecord"
+            $Query = "getEntityByName?parentId=$($ZoneObj.id)&name=$($ShortName)&type=HostRecord"
             $BlueCatReply = Invoke-BlueCatApi -Method Get -Request $Query -BlueCatSession $BlueCatSession
+        } else {
+            # Zone could not be resolved
+            Write-Warning "$($thisFN): Zone could not be resolved for $($FQDN)"
         }
 
         if ($BlueCatReply.id) {
@@ -144,7 +145,7 @@
                 type       = $BlueCatReply.type
                 shortName  = $BlueCatReply.name
                 address    = $PropertyObj.address
-                zone       = $Zone
+                zone       = $ZoneObj
                 property   = $PropertyObj
                 properties = $BlueCatReply.properties
                 view       = $View

@@ -21,6 +21,8 @@ function Add-BlueCatMX {
     A value of -1 will set the new record to use the zone default TTL.
 
     If not specified, BlueCatPoSh will default this value to -1 (use zone default).
+.PARAMETER Zone
+    An optional zone object to be searched. Providing a zone object reduces API calls making the lookup faster.
 .PARAMETER ViewID
     An integer value representing the entity ID of the desired view.
 .PARAMETER View
@@ -75,6 +77,10 @@ function Add-BlueCatMX {
         [Parameter()]
         [int] $TTL = -1,
 
+        [Parameter(ParameterSetName='ZoneObj',Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject] $Zone,
+
         [Parameter(ParameterSetName='ViewID')]
         [ValidateRange(1, [int]::MaxValue)]
         [int] $ViewID,
@@ -98,75 +104,112 @@ function Add-BlueCatMX {
     process {
         $thisFN = (Get-PSCallStack)[0].Command
 
+        if ($Zone) {
+            $View = $Zone.view
+        } elseif ($ViewID) {
+            $View = Get-BlueCatView -ViewID $ViewID -BlueCatSession $BlueCatSession
+        } elseif (-not $View) {
+            # No View or ViewID has been passed in so attempt to use the default view
+            $BlueCatSession | Confirm-Settings -View
+            Write-Verbose "$($thisFN): Using default view '$($BlueCatSession.View.name)' (ID:$($BlueCatSession.View.id))"
+            $View = $BlueCatSession.View
+        }
+
+        if (-not $View) {
+            throw "$($thisFN): View could not be resolved"
+        }
+
+        if (-not $View.ID) {
+            # This is not a valid object!
+            throw "$($thisFN): Invalid View object passed to function!"
+        }
+
+        if ($View.type -ne 'View') {
+            throw "$($thisFN): Object is not a View (ID:$($View.ID) $($View.name) is a $($View.type))"
+        }
+
+        # Trim any trailing dots from the name for consistency/display purposes
         $FQDN = $Name | Test-ValidFQDN
-        $LookupParms = @{
+
+        # Resolve zone if not provided
+        if (-not $Zone) {
+            $Zone = Resolve-BlueCatZone -Name $FQDN -View $View -BlueCatSession $BlueCatSession
+            if (-not $Zone) {
+                # Zone could not be resolved
+                throw "$($thisFN): Zone could not be resolved for $($FQDN)"
+            }
+        }
+
+        # Resolve short name for lookup
+        if ($FQDN -eq $Zone.name) {
+            $ShortName = ''
+        } else {
+            $ShortName = $FQDN -replace "\.$($Zone.name)$", ''
+        }
+
+        $LookupBase = @{
             Name           = $FQDN
             BlueCatSession = $BlueCatSession
+            ErrorAction    = 'SilentlyContinue'
         }
-        if ($ViewID) {
-            $LookupParms.ViewID = $ViewID
-        } elseif ($View)   {
-            $LookupParms.View   = $View
-            $ViewID             = $View.ID
-        }
+        $LookupZone = $LookupBase + @{ Zone = $Zone; SkipExternalHostCheck = $true }
+        $LookupView = $LookupBase + @{ View = $View }
 
-        $MXInfo = Resolve-BlueCatFQDN @LookupParms
-
-        # Insert check for duplicate/conflicting specific MX record
-
-        if ($MXInfo.alias) {
-            throw "Aborting MX record creation: Alias/CName record for $($FQDN) found!"
+        if (Get-BlueCatAlias @LookupZone) {
+            # There is already an existing alias
+            throw "$($thisFN): Existing alias record found - aborting MX creation!"
         }
 
-        if (-not $MXInfo.zone) {
-            # No deployable zone was found for MX record
-            throw "No deployable zone was found for $($FQDN)"
-        }
-        Write-Verbose "$($thisFN): Selected Zone #$($MXInfo.zone.id) as '$($MXInfo.zone.name)'"
-
-        if ($MXInfo.external) {
-            Write-Warning "$($thisFN): An external host entry exists for '$($MXInfo.external.name)'"
+        $ExistingExternal = Get-BlueCatExternalHost @LookupView
+        if ($ExistingExternal) {
+            Write-Warning "$($thisFN): An external host entry exists for '$($ExistingExternal.name)' (ID:$($ExistingExternal.id))"
         }
 
-        $LookupRelay      = $LookupParms
-        $NewRelay         = $Relay | Test-ValidFQDN
-        $LookupRelay.Name = $NewRelay
+        # Insert check for duplicate / conflicting entries
+
+        $LookupRelay      = $LookupView
+        $RelayFQDN        = $Relay | Test-ValidFQDN
+        $LookupRelay.Name = $RelayFQDN
 
         $relayInfo        = Resolve-BlueCatFQDN @LookupRelay
         if ($relayInfo.host) {
             $relayName = $relayInfo.host.name
-            Write-Verbose "$($thisFN): Found host record for relay '$($NewRelay)' (ID:$($relayInfo.host.id))"
+            Write-Verbose "$($thisFN): Found host record for relay '$($RelayFQDN)' (ID:$($relayInfo.host.id))"
             if ($relayInfo.external) {
-                Write-Warning "$($thisFN): Both internal and external host entries found for $($NewRelay)"
+                Write-Warning "$($thisFN): Both internal and external host entries found for $($RelayFQDN)"
             }
         } elseif ($relayInfo.external) {
             $relayName = $relayInfo.external.name
-            Write-Verbose "$($thisFN): Found EXTERNAL host record for relay '$($NewRelay)' (ID:$($relayInfo.external.id))"
+            Write-Verbose "$($thisFN): Found EXTERNAL host record for relay '$($RelayFQDN)' (ID:$($relayInfo.external.id))"
         } else {
-            throw "Aborting MX record creation: No host record found for relay $($NewRelay)"
+            throw "Aborting MX record creation: No host record found for relay $($RelayFQDN)"
         }
 
         $Body = @{
             type       = 'MXRecord'
-            name       = $MXInfo.shortName
-            properties = "ttl=$($TTL)|absoluteName=$($MXInfo.name)|linkedRecordName=$($relayName)|priority=$($Priority)|"
+            name       = $ShortName
+            properties = "ttl=$($TTL)|absoluteName=$($FQDN)|linkedRecordName=$($relayName)|priority=$($Priority)|"
         }
         $CreateMXRecord = @{
             Method         = 'Post'
-            Request        = "addEntity?parentId=$($MXInfo.zone.id)"
+            Request        = "addEntity?parentId=$($Zone.id)"
             Body           = ($Body | ConvertTo-Json)
             BlueCatSession = $BlueCatSession
         }
 
         $BlueCatReply = Invoke-BlueCatApi @CreateMXRecord
-        if (-not $BlueCatReply) {
-            throw "MX record creation failed for $($FQDN)"
-        }
 
-        Write-Verbose "$($thisFN): Created ID:$($BlueCatReply) for '$($MXInfo.name)' (points to $($relayName) priority:$($Priority))"
+        if ($BlueCatReply) {
+            Write-Verbose "$($thisFN): Created ID:$($BlueCatReply) for '$($FQDN)' (points to $($relayName) priority:$($Priority))"
 
-        if ($PassThru) {
-            Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+            if ($PassThru) {
+                # Must pull record by ID since there can be multiple records
+                Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+            }
+        } else {
+            $Failure = "$($thisFN): Record creation failed for $($FQDN)"
+            throw $Failure
+            Write-Verbose $Failure
         }
     }
 }
