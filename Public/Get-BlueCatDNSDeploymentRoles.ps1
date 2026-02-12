@@ -2,17 +2,8 @@ Function Get-BlueCatDNSDeploymentRoles {
         [CmdletBinding()]
 
     param(
-        [Parameter(ParameterSetName='ZoneObj',Mandatory)]
         [ValidateNotNullOrEmpty()]
         [PSCustomObject] $Zone,
-
-        [Parameter(ParameterSetName='ViewID')]
-        [ValidateRange(1, [int]::MaxValue)]
-        [int] $ViewID,
-
-        [Parameter(ParameterSetName='ViewObj',Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [PSCustomObject] $View,
 
         [Parameter(ValueFromPipeline)]
         [Alias('Connection','Session')]
