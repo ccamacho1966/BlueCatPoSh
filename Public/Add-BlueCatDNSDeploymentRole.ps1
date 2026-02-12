@@ -13,6 +13,10 @@ Function Add-BlueCatDNSDeploymentRole {
         [string] $Role,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [PsCustomObject] $ZoneTransferInterface,
+
+        [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
@@ -34,6 +38,9 @@ Function Add-BlueCatDNSDeploymentRole {
         }
 
         $Uri = "addDNSDeploymentRole?entityId=$($Zone.id)&serverInterfaceId=$($Interface.id)&type=$($Role)"
+        if ($ZoneTransferInterface) {
+            $Uri += "&properties=zoneTransServerInterface=$($ZoneTransferInterface.id)|"
+        }
         $BlueCatReply = Invoke-BlueCatApi -BlueCatSession $BlueCatSession -Method Post -Request $Uri
         if (-not $BlueCatReply) {
             throw "Failed to add DNS Deployment Role: $($BlueCatReply)"
