@@ -66,11 +66,16 @@ function Get-BlueCatSOA {
         # Pull the SOA record from the list of DNS Deployment Options
         $SoaRecord  = $DnsOptions | Where-Object -Property type -EQ -Value 'START_OF_AUTHORITY'
 
-        # Standardize the object
-        $SoaRecord.name = $Zone.name
-        $SoaRecord.type = 'StartOfAuthority'
+        if ($SoaRecord) {
+            # Standardize the object
+            $SoaRecord.name = $Zone.name
+            $SoaRecord.type = 'StartOfAuthority'
 
-        # Convert the tweaked reply and return result
-        $SoaRecord | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+            # Convert the tweaked reply and return result
+            $SoaRecord | Convert-BlueCatReply -BlueCatSession $BlueCatSession
+        } else {
+            # There is no SOA record...
+            Write-Warning "$($thisFN): No SOA record found for $($Zone.name)"
+        }
     }
 }
