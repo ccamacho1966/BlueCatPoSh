@@ -80,6 +80,16 @@
             $newObj | Add-Member -MemberType NoteProperty -Name 'properties' -Value $RawObject.properties
         }
 
+        if ($RawObject.type -eq 'START_OF_AUTHORITY') {
+            $RawObject.type = 'StartOfAuthority'
+        }
+
+        if ($RawObject.type -eq 'StartOfAuthority') {
+            if ($RawObject.name -in ('start-of-authority','Start of Authority','')) {
+                $RawObject.name = ((Get-BlueCatParent -ID $RawObject.id -BlueCatSession $BlueCatSession).name)
+            }
+        }
+
         if ($RawObject.type -eq 'View') {
             # Add a Config reference to views and that is all
             $configObj = Get-BlueCatParent -Connection $BlueCatSession -id $RawObject.id
