@@ -7,6 +7,9 @@ function Get-BlueCatServerDeploymentStatus {
         [PSCustomObject] $Server,
 
         [Parameter()]
+        [switch] $PassThru,
+
+        [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
@@ -44,11 +47,14 @@ function Get-BlueCatServerDeploymentStatus {
 
         $BlueCatReply = Invoke-BlueCatApi @LookupParms
 
-        $Status = @{
+        $Server.deployStatus = @{
+            Timestamp   = (Get-Date)
             Code        = $BlueCatReply
             Description = ($ResultCodes["$($BlueCatReply)"])
         }
 
-        $Status
+        if ($PassThru) {
+            $Server.deployStatus
+        }
     }
 }
