@@ -81,12 +81,12 @@ function Remove-BlueCatSOA {
             throw $FailureMessage
         }
 
-        $DeleteAlias = @{
+        $DeleteSOA = @{
             ID             = $Object.ID
             BlueCatSession = $BlueCatSession
         }
 
         Write-Verbose "$($thisFN): Deleting SOA record for '$($Object.Name)' (ID:$($Object.ID))"
-        Remove-BlueCatEntityById @DeleteAlias
+        Remove-BlueCatEntityById @DeleteSOA
     }
 }
