@@ -2,10 +2,10 @@ function Invoke-BlueCatQuickDeploy {
     [CmdletBinding()]
 
     param(
-        [ValidateNotNullOrEmpty()]
+        [ValidateNotNullOrEmpty(ValueFromPipeline)]
         [PSCustomObject] $Zone,
 
-        [Parameter(ValueFromPipeline)]
+        [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
