@@ -136,6 +136,9 @@ Function Get-BlueCatServer {
             }
             $ServerObj | Add-Member -MemberType NoteProperty -Name interface -Value $Interfaces
 
+            $ServerObj | Add-Member -MemberType NoteProperty -Name deployStatus -Value $null
+            $ServerObj | Get-BlueCatServerDeploymentStatus -BlueCatSession $BlueCatSession
+
             $ServerObj
         }
     }
