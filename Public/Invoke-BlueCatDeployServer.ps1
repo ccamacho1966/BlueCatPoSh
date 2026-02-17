@@ -7,6 +7,10 @@ function Invoke-BlueCatDeployServer {
         [PSCustomObject] $Server,
 
         [Parameter()]
+        [ValidateSet('DNS','DHCP','DHCPv6','TFTP')]
+        [string[]] $Services,
+
+        [Parameter()]
         [Alias('Connection','Session')]
         [BlueCat] $BlueCatSession = $Script:BlueCatSession
     )
@@ -25,8 +29,12 @@ function Invoke-BlueCatDeployServer {
 
         $InvokeParms = @{
             Method         = 'Post'
-            Request        = "deployServer?serverId=$($Server.id)"
             BlueCatSession = $BlueCatSession
+        }
+        if ($Services) {
+            $InvokeParms.Request = "deployServerServices?serverId=$($Server.id)&services=$($Services -join ',')"
+        } else {
+            $InvokeParms.Request = "deployServer?serverId=$($Server.id)"
         }
 
         try {
