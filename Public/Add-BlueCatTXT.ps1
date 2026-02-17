@@ -179,7 +179,9 @@
 
             if ($PassThru) {
                 # Must pull record by ID since there can be multiple records
-                Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+                $TXTRecord = Get-BlueCatEntityById -ID $BlueCatReply -BlueCatSession $BlueCatSession
+                $TXTRecord | Add-Member -MemberType NoteProperty -Name zone -Value $Zone
+                $TXTRecord
             }
         } else {
             $Failure = "$($thisFN): Record creation failed for $($FQDN)"
