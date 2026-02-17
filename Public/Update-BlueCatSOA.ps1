@@ -2,7 +2,7 @@ function Update-BlueCatSOA {
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
-        [Parameter(ParameterSetName='SOA',Mandatory)]
+        [Parameter(ParameterSetName='SOA',Mandatory,ValueFromPipeline)]
         [PSCustomObject] $SOA,
 
         [Parameter(ParameterSetName='ZoneObj',Mandatory)]
@@ -104,7 +104,7 @@ function Update-BlueCatSOA {
         if ($OriginServer) { $SOA.property.mname   = $OriginServer }
 
         # Convert the property object to a BlueCat properties string
-        $SoaPropertyString = ($SOA.property | Convert-BlueCatPropertyObject)
+        $SoaPropertyString = ($SOA.property | Select-Object -Property * -ExcludeProperty inherited | Convert-BlueCatPropertyObject)
 
         # Build the BlueCat StartOfAuthority object
         $SoaUpdateBody = @{
