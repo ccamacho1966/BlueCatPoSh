@@ -2,7 +2,8 @@ function Invoke-BlueCatQuickDeploy {
     [CmdletBinding()]
 
     param(
-        [ValidateNotNullOrEmpty(ValueFromPipeline)]
+        [Parameter(Mandatory,ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
         [PSCustomObject] $Zone,
 
         [Parameter()]
