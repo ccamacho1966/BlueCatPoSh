@@ -8,7 +8,7 @@ BlueCat API class library and supporting functions.
 Author: Christopher Camacho
 #>
 
-$Script:ModuleVersion = '3.1.0'
+$Script:ModuleVersion = '3.2.0'
 
 <#
 [using module] doesn't consistently import classes or enumerations defined in

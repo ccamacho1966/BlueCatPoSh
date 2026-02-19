@@ -12,7 +12,7 @@
 RootModule = 'BlueCatPoSh.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.1.0'
+ModuleVersion = '3.2.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Author = 'Christopher Camacho'
 CompanyName = 'CyberspaceServers.com'
 
 # Copyright statement for this module
-Copyright = '(c) 2025 Christopher Camacho. All rights reserved.'
+Copyright = '(c) 2026 Christopher Camacho. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'BlueCatPoSh provides a PowerShell library for using the BlueCat IPAM API primarily focused on DNS functionality. The v2 API is not yet supported.'
@@ -73,23 +73,28 @@ FunctionsToExport = @(
     'Add-BlueCatDNSDeploymentRole',
     'Add-BlueCatIP4Block', 'Add-BlueCatIP4Network',
     'Add-BlueCatAlias', 'Add-BlueCatExternalHost', 'Add-BlueCatHost',
-    'Add-BlueCatMX', 'Add-BlueCatSRV', 'Add-BlueCatTXT', 'Add-BlueCatZone',
+    'Add-BlueCatMX', 'Add-BlueCatSOA', 'Add-BlueCatSRV', 'Add-BlueCatTXT', 'Add-BlueCatZone',
     'Clear-BlueCatConfig', 'Clear-BlueCatView',
     'Connect-BlueCat', 'Disconnect-BlueCat',
     'Convert-BlueCatPropertyObject', 'Convert-BlueCatPropertyString', 'Convert-BlueCatReply',
+    'Get-BlueCatDNSDeploymentRoles', 'Get-BlueCatServerDeploymentStatus',
     'Get-BlueCatConfig', 'Get-BlueCatView', 'Get-BlueCatConnection',
     'Get-BlueCatEntities', 'Get-BlueCatEntityById', 'Get-BlueCatEntityByName',
     'Get-BlueCatParent', 'Get-BlueCatServer',
-    'Get-BlueCatIP4Addresses', 'Get-BlueCatIP4Blocks', 'Get-BlueCatIP4Networks', 'Get-BlueCatIPContainerByIP',
+    'Get-BlueCatIP4Addresses', 'Get-BlueCatIP4Blocks', 'Get-BlueCatIP4Networks',
+    'Get-BlueCatIPContainerByIP',
     'Get-BlueCatAlias', 'Get-BlueCatExternalHost', 'Get-BlueCatHost',
-    'Get-BlueCatMX', 'Get-BlueCatSRV', 'Get-BlueCatTXT', 'Get-BlueCatZone',
-    'Invoke-BlueCatApi',
+    'Get-BlueCatMX', 'Get-BlueCatSOA', 'Get-BlueCatSRV', 'Get-BlueCatTXT', 'Get-BlueCatZone',
+    'Invoke-BlueCatApi', 'Invoke-BlueCatQuickDeploy', 'Invoke-BlueCatDeployServer',
+    'Remove-BlueCatDNSDeploymentRole',
     'Remove-BlueCatEntityById', 'Remove-BlueCatIP4Block', 'Remove-BlueCatIP4Network',
     'Remove-BlueCatAlias', 'Remove-BlueCatExternalHost', 'Remove-BlueCatHost',
-    'Remove-BlueCatMX', 'Remove-BlueCatSRV', 'Remove-BlueCatTXT', 'Remove-BlueCatZone',
+    'Remove-BlueCatMX', 'Remove-BlueCatSOA', 'Remove-BlueCatSRV', 'Remove-BlueCatTXT',
+    'Remove-BlueCatZone',
     'Resolve-BlueCatFQDN', 'Resolve-BlueCatZone',
     'Set-BlueCatConfig', 'Set-BlueCatConnection', 'Set-BlueCatView',
-    'Trace-BlueCatRoot')
+    'Trace-BlueCatRoot',
+    'Update-BlueCatSOA')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
