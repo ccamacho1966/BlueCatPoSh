@@ -1,4 +1,69 @@
 function Add-BlueCatSOA {
+ <#
+.SYNOPSIS
+    Create a new Start of Authority definition
+.DESCRIPTION
+    The Add-BlueCatSOA cmdlet allows the retrieval of Start of Authority definitions.
+.PARAMETER Name
+    A string value representing the FQDN of the DNS Zone that will get the new Start of Authority record.
+.PARAMETER Zone
+    A PSCustomObject representing the DNS Zone that will get the new Start of Authority record.
+.PARAMETER Email
+    Mandatory MailAddress object representing the email address of the published domain administrator.
+.PARAMETER OriginServer
+    A string value representing the FQDN of the published primary name server.
+    Defaults to automatic selection by BlueCat.
+.PARAMETER Refresh
+    Time in seconds that secondary servers wait before asking for the serial number again.
+    Defaults to 1200 seconds (20 minutes).
+.PARAMETER Retry
+    Time in seconds a secondary waits to retry a failed request.
+    Defaults to 180 seconds (3 minutes).
+.PARAMETER Expire
+    Maximum time in seconds a secondary server can wait before treating its data as invalid.
+    Defaults to 1,209,600 seconds (14 days).
+.PARAMETER Minimum
+    The default time-to-live for caching negative (not found) records.
+    Defaults to 3,600 seconds (1 hour).
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object creation.
+.PARAMETER PassThru
+    A switch that causes a PSCustomObject representing the new Start of Authority record to be returned.
+.EXAMPLE
+    PS> Add-BlueCatSOA -Name 'example.com' -email 'domains@example.com' -Refresh 600
+
+    Create a Start of Authority for example.com
+    - Administrative email address will be 'domains@example.com'
+    - Refresh timer will be 600 seconds (10 minutes)
+    - All other fields will be set to defaults
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> $NewSOA = Add-BlueCatSOA -Zone $MyZone -Email 'dnsadmin@anotherzone.com' -PassThru
+
+    Create a Start of Authority for the zone represented by $MyZone
+    - Administrative email address will be 'dnsadmin@anotherzone.com'
+    - All other fields will be set to defaults
+    The new Start of Authority record will be returned and stored as $NewSOA (PassThru)
+    BlueCatSession will default to the current default session.
+.INPUTS
+    None
+.OUTPUTS
+    None, by default.
+    If PassThru is specified, a PSCustomObject representing the new Start of Authority will be returned.
+
+    [int] id
+    [string] name
+    [string] type = 'StartOfAuthority'
+    [string] properties
+    [PSCustomObject] property
+    [PSCustomObject] config
+    [PSCustomObject] view
+#>
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
