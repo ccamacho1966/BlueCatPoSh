@@ -44,7 +44,7 @@ Function Get-BlueCatServer {
     [PSCustomObject[]] published
     [PSCustomObject[]] interface
     [PSCustomObject] config
-    [PSCustomObject] zone
+    [PSCustomObject] deployStatus
 #>
     [CmdletBinding(DefaultParameterSetName='byID')]
 
