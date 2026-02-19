@@ -1,4 +1,42 @@
 function Get-BlueCatSOA {
+ <#
+.SYNOPSIS
+    Retrieve a Start of Authority definition
+.DESCRIPTION
+    The Get-BlueCatSOA cmdlet allows the retrieval of Start of Authority definitions.
+.PARAMETER Name
+    A string value representing the FQDN of the Zone definition to be retrieved.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object lookup.
+.EXAMPLE
+    PS> Get-BlueCatSOA -Name 'example.com'
+
+    Returns a PSCustomObject representing the Start of Authority for 'example.com'.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Get-BlueCatSOA -Name 'anotherzone.com' -ViewID 23456 -BlueCatSession $Session3
+
+    Returns a PSCustomObject representing the Start of Authority for 'anotherzone.com'.
+    Use the BlueCatSession associated with $Session3 to perform this lookup.
+    The record will be searched for in view 23456.
+.INPUTS
+    None
+.OUTPUTS
+    PSCustomObject representing the requested Start of Authority.
+
+    [int] id
+    [string] name
+    [string] type = 'StartOfAuthority'
+    [string] properties
+    [PSCustomObject] property
+    [PSCustomObject] config
+    [PSCustomObject] view
+#>
     [CmdletBinding(DefaultParameterSetName='ViewID')]
 
     param(
