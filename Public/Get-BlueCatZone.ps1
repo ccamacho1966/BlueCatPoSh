@@ -3,7 +3,7 @@
 .SYNOPSIS
     Retrieve a DNS Zone definition
 .DESCRIPTION
-    The Get-BlueCatHost cmdlet allows the retrieval of DNS Zone definitions.
+    The Get-BlueCatZone cmdlet allows the retrieval of DNS Zone definitions.
 .PARAMETER Name
     A string value representing the FQDN of the Zone definition to be retrieved.
 .PARAMETER ViewID
@@ -13,13 +13,13 @@
 .PARAMETER BlueCatSession
     A BlueCat object representing the session to be used for this object lookup.
 .EXAMPLE
-    PS> Get-BlueCatHost -Name example.com
+    PS> Get-BlueCatZone -Name example.com
 
     Returns a PSCustomObject representing the requested zone definition, or NULL if not found.
     BlueCatSession will default to the current default session.
     View will default to the BlueCatSession default view.
 .EXAMPLE
-    PS> Get-BlueCatHost -Name anotherzone.com -ViewID 23456 -BlueCatSession $Session3
+    PS> Get-BlueCatZone -Name anotherzone.com -ViewID 23456 -BlueCatSession $Session3
 
     Returns a PSCustomObject representing the requested zone definition, or NULL if not found.
     Use the BlueCatSession associated with $Session3 to perform this lookup.
