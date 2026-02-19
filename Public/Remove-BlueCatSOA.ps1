@@ -1,4 +1,48 @@
 function Remove-BlueCatSOA {
+<#
+.SYNOPSIS
+    Remove a Start of Authority definition
+.DESCRIPTION
+    The Remove-BlueCatSOA cmdlet allows the removal of Start of Authority definitions.
+.PARAMETER Name
+    A string value representing the FQDN of the zone to remove the Start of Authority from.
+.PARAMETER ID
+    An integer value representing the entity ID of the Start of Authority to be removed.
+.PARAMETER Object
+    A PSCustomObject representing the Start of Authority to be removed.
+.PARAMETER ViewID
+    An integer value representing the entity ID of the desired view.
+.PARAMETER View
+    A PSCustomObject representing the desired view.
+.PARAMETER BlueCatSession
+    A BlueCat object representing the session to be used for this object operation.
+.EXAMPLE
+    PS> Remove-BlueCatSOA -Name example.com
+
+    Removes the Start of Authority for 'example.com'.
+    BlueCatSession will default to the current default session.
+    View will default to the BlueCatSession default view.
+.EXAMPLE
+    PS> Remove-BlueCatSOA -Name anotherzone.com -ViewID 23456 -BlueCatSession $Session3
+
+    Removes the Start of Authority for 'anotherzone.com'.
+    Use the BlueCatSession associated with $Session3 to perform this operation.
+    The zone will be searched for in view 23456.
+.EXAMPLE
+    PS> Remove-BlueCatSOA -ID 10007
+
+    Removes the Start of Authority with entity ID 10007.
+    BlueCatSession will default to the current default session.
+.EXAMPLE
+    PS> $MySOA | Remove-BlueCatSOA
+
+    Removes the Start of Authority represented by $MySOA which is passed on the pipeline.
+    BlueCatSession will default to the current default session.
+.INPUTS
+    PSCustomObject representing the Start of Authority to be removed.
+.OUTPUTS
+    None
+#>
         [CmdletBinding(DefaultParameterSetName='byID')]
 
     param(
